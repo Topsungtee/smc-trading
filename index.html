@@ -1940,9 +1940,7 @@ async function runAI(){
   for(var i=0;i<events.length;i++){if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>0){nextNews=events[i].name+" in "+events[i].mins+" mins ("+events[i].watTime+" Nigeria time)";break;}}
   var prompt="You are an institutional Smart Money Concepts (SMC) trader. Analyse this setup and give a clear, direct briefing.\n\nINSTRUMENT: "+sym+" ("+d.name+")\nPRICE: "+d.price+" | HIGH: "+d.high+" | LOW: "+d.low+"\nGMT HOUR: "+gh+"\n\nSMC RESULTS:\n- H4 Bias: "+r.bias+"\n- BOS: "+(r.bos?"YES":"NO")+" | CHoCH: "+(r.choch?"YES":"NO")+"\n- Price at Order Block ("+fmt(r.obL)+"–"+fmt(r.obH)+"): "+(r.checks[2].pass?"YES":"NO")+"\n- Fair Value Gap present: "+(r.checks[3].pass?"YES":"NO")+"\n- Liquidity Swept: "+(r.liqSwept?"YES":"NO")+"\n- Session: "+(r.bestSess?"PRIME":r.inSess?"VALID":"CLOSED")+"\n- Score: "+r.passCount+"/6 | Verdict: "+r.direction+"\n- Next News: "+nextNews+(r.entry?"\n- Entry: "+fmt(r.entry)+" | SL: "+fmt(r.sl)+" | TP1: "+fmt(r.tp1):"")+"\n\nWrite 150–200 words. Tell the trader:\n1. Current market structure and what the bias means today\n2. Whether this setup is valid or they should wait — be direct\n3. What to watch on M15 as the exact entry trigger\n4. Where the liquidity target is for this move\n5. Any news risk they need to be aware of right now\n\nTone: senior trader mentoring a student. Direct. No disclaimers. No fluff.";
   try{
-    var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-    var data2=await resp.json();
-    var text=data2.content?data2.content.map(function(c){return c.text||"";}).join(""):"Analysis unavailable.";
+    var text = await claudeAPI(prompt);
     await typeText(aiEl,text);
   }catch(e){if(aiEl) aiEl.textContent="⚠ Connection error. Check network and retry.";}
   if(btn){btn.disabled=false;btn.classList.remove("loading");}
@@ -1964,9 +1962,7 @@ async function runNewsAI(){
   var evMins=next?next.mins+" minutes away":"no specific event";
   var prompt="You are an institutional news trader specialising in Gold, GBP/USD and EUR/USD. Provide a sharp, practical news trading brief.\n\nINSTRUMENT: "+sym+" ("+d.name+")\nCURRENT PRICE: "+d.price+"\nNEXT EVENT: "+evName+" — "+evMins+(next?" (Nigeria: "+next.watTime+", Impact: "+next.imp+")":"")+"\n\nGive the trader:\n1. What this news event typically does to "+sym+" — direction and pip range\n2. The straddle strategy: exact offset, SL and TP1/TP2 for this event on "+sym+"\n3. The post-news entry method — what candle to wait for and why\n4. The fake-out risk — how to identify and avoid being trapped\n5. The most important thing to watch: expected vs actual number. If actual is BETTER than expected = buy. If WORSE = sell. Explain this for this specific event.\n6. One specific risk warning unique to "+evName+" on "+sym+"\n\nMax 200 words. Direct, professional, actionable. No generic disclaimers.";
   try{
-    var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-    var data2=await resp.json();
-    var text=data2.content?data2.content.map(function(c){return c.text||"";}).join(""):"Analysis unavailable.";
+    var text = await claudeAPI(prompt);
     await typeText(aiEl,text);
   }catch(e){if(aiEl) aiEl.textContent="⚠ Connection error. Check network and retry.";}
   if(btn){btn.disabled=false;btn.classList.remove("loading");}
@@ -2179,9 +2175,53 @@ function toggleNewsPanel(){
   if(chev) chev.style.transform = newsPanelOpen ? "rotate(180deg)" : "rotate(0deg)";
 }
 
-// ═══════════════════════════════════════════════
-// PER-EVENT LIVE AI NEWS ANALYSIS
-// ═══════════════════════════════════════════════
+// ── Claude API helper — works from GitHub Pages ──
+async function claudeAPI(prompt){
+  // Use allorigins CORS proxy to bypass GitHub Pages CORS restriction
+  var payload = JSON.stringify({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1000,
+    messages: [{ role: "user", content: prompt }],
+    system: "You are an expert SMC trading analyst. Be direct, concise and actionable."
+  });
+  // Try direct first (works on localhost/some hosts)
+  try {
+    var r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: payload
+    });
+    if(r.ok){
+      var d = await r.json();
+      return d.content ? d.content.map(function(c){return c.text||"";}).join("") : "Analysis unavailable.";
+    }
+  } catch(e){}
+  // Fallback: corsproxy.io
+  try {
+    var r2 = await fetch("https://corsproxy.io/?" + encodeURIComponent("https://api.anthropic.com/v1/messages"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: payload
+    });
+    if(r2.ok){
+      var d2 = await r2.json();
+      return d2.content ? d2.content.map(function(c){return c.text||"";}).join("") : "Analysis unavailable.";
+    }
+  } catch(e2){}
+  throw new Error("Failed to fetch");
+}
+
+
 var API_KEY = "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";
 
 async function runNewsEventAI(eventId, btnEl){
@@ -2220,17 +2260,7 @@ async function runNewsEventAI(eventId, btnEl){
     "Be direct, practical, specific to "+sym+". No generic statements.";
 
   try {
-    var res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role:"user", content: prompt }]
-      })
-    });
-    var data = await res.json();
-    var text = (data.content && data.content[0] && data.content[0].text) || "No response received.";
+    var text = await claudeAPI(prompt);
     resultEl.innerHTML = '<div style="font-size:11px;color:var(--text2);line-height:1.8;white-space:pre-wrap;">'+text+'</div>';
   } catch(err){
     resultEl.innerHTML = '<div style="color:var(--red2);font-size:11px;">Error: '+err.message+'</div>';
