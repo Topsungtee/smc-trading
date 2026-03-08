@@ -795,6 +795,12 @@ body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",sans-ser
 </div><!-- end main -->
 </div><!-- end wrap -->
 
+<div style="text-align:center;padding:24px 16px 32px;border-top:1px solid rgba(255,255,255,0.06);margin-top:4px;">
+  <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);text-transform:uppercase;">
+    © 2026 Etinosa Tope · All Rights Reserved
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════
 // TWELVE DATA LIVE PRICE SYSTEM
@@ -1091,7 +1097,12 @@ function updateClock(){
   }
   // News warning update
   updateNewsWarn();
-  updateNewsCalendar();
+  // Only rebuild news calendar once per minute so open items stay open
+  var _nowMin = new Date().getMinutes();
+  if(typeof _lastNewsMin === 'undefined' || _lastNewsMin !== _nowMin){
+    _lastNewsMin = _nowMin;
+    updateNewsCalendar();
+  }
   updateNextNews();
 }
 setInterval(updateClock,1000);
@@ -1144,7 +1155,11 @@ function updateNewsWarn(){
 // ═══════════════════════════════════════════════
 var expandedNews = null;
 
+var _newsToggleLock = false;
 function toggleNewsItem(id){
+  if(_newsToggleLock) return;
+  _newsToggleLock = true;
+  setTimeout(function(){ _newsToggleLock = false; }, 400);
   var body = document.getElementById("ncbody-"+id);
   var item = document.getElementById("ncitem-"+id);
   if(!body||!item) return;
@@ -2152,7 +2167,11 @@ function selSym(s, el){
 // NEWS PANEL — COLLAPSIBLE DROPDOWN
 // ═══════════════════════════════════════════════
 var newsPanelOpen = false;
+var _newsPanelLock = false;
 function toggleNewsPanel(){
+  if(_newsPanelLock) return;
+  _newsPanelLock = true;
+  setTimeout(function(){ _newsPanelLock = false; }, 400);
   newsPanelOpen = !newsPanelOpen;
   var body = document.getElementById("news-panel-body");
   var chev = document.getElementById("news-panel-chevron");
@@ -2163,7 +2182,7 @@ function toggleNewsPanel(){
 // ═══════════════════════════════════════════════
 // PER-EVENT LIVE AI NEWS ANALYSIS
 // ═══════════════════════════════════════════════
-var API_KEY = "YOUR_CLAUDE_API_KEY_HERE"; // ← paste your key here
+var API_KEY = "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";
 
 async function runNewsEventAI(eventId, btnEl){
   var events = getEvents();
