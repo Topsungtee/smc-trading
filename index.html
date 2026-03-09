@@ -886,8 +886,8 @@ async function fetchAllPrices(){
     XAUUSD: "XAU/USD",
     GBPUSD: "GBP/USD",
     EURUSD: "EUR/USD",
-    NAS100: "QQQ",
-    US30:   "DIA"
+    NAS100: "NDX",
+    US30:   "DJI"
   };
   for(var k in symbols){
     try {
@@ -916,8 +916,8 @@ var FALLBACK_PRICES = {
   XAUUSD: {price:5114.00, prev:5081.11, high:5175.06, low:5062.89},
   GBPUSD: {price:1.27142, prev:1.27360, high:1.27800, low:1.26900},
   EURUSD: {price:1.08234, prev:1.08122, high:1.08500, low:1.07900},
-  NAS100: {price:19842.50,prev:19718.20,high:19950.00,low:19600.00},
-  US30:   {price:41850.00,prev:41963.40,high:42100.00,low:41600.00}
+  NAS100: {price:24643.00,prev:24938.00,high:24980.00,low:24400.00},
+  US30:   {price:47502.00,prev:47955.00,high:48100.00,low:47200.00}
 };
 
 function loadFallbackPrices(){
