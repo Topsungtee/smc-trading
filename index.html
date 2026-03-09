@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Money — Institutional Trading System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://s3.tradingview.com/tv.js"></script>
+<style>
+:root {
+  --bg:#020508; --bg2:#060b10; --bg3:#0a1018;
+  --panel:#080f16; --border:#0f2030; --border2:#163040; --border3:#1e4060;
+  --gold:#c8962a; --gold2:#e8b84b;
+  --green:#1db87a; --green2:#2ecc8e;
+  --red:#c0392b; --red2:#e74c3c;
+  --blue:#1a6ea8; --cyan:#0891b2; --cyan2:#06b6d4;
+  --orange:#d97706; --purple:#7c3aed;
+  --text:#8aa0b8; --text2:#3a5570; --text3:#1a3048;
+  --white:#c8dae8; --white2:#e8f4ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",sans-serif;min-height:100vh;overflow-x:hidden;}
+.wrap{position:relative;z-index:1;max-width:1480px;margin:0 auto;padding:14px;}
+
+/* HEADER */
+.header{display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;overflow:hidden;}
+.hbrand{padding:14px 22px;border-right:1px solid var(--border2);display:flex;flex-direction:column;justify-content:center;}
+.hbrand-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:var(--white2);}
+.hbrand-sub{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-top:2px;}
+.hsess{display:flex;flex:1;}
+.sb{flex:1;padding:10px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;transition:background .3s;}
+.sb.active{background:rgba(6,182,212,0.04);}
+.sb-lbl{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:3px;color:var(--text3);margin-bottom:3px;}
+.sb-time{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text2);}
+.sb-status{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;margin-top:2px;}
+.so{color:var(--green2);} .sc{color:var(--text3);}
+.hclock{padding:12px 20px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;}
+.clock-lbl{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text2);}
+.clock-val{font-family:"IBM Plex Mono",monospace;font-size:20px;color:var(--cyan2);}
+.clock-date{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text3);margin-top:1px;letter-spacing:1px;}
+
+/* SESSION BANNER */
+.sess-banner{padding:9px 16px;border-radius:4px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:1px;}
+.sb-off{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.25);color:var(--orange);}
+.sb-on{background:rgba(29,184,122,.05);border:1px solid rgba(29,184,122,.2);color:var(--green2);}
+.sb-best{background:rgba(200,150,42,.06);border:1px solid rgba(200,150,42,.3);color:var(--gold2);}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-off .sb-dot{background:var(--orange);}
+.sb-on .sb-dot,.sb-best .sb-dot{background:var(--gold2);box-shadow:0 0 7px var(--gold2);animation:pu 1.4s ease infinite;}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-cntd{margin-left:auto;color:var(--text2);}
+
+/* NEWS WARNING */
+.news-warn{display:none;padding:11px 16px;border-radius:5px;margin-bottom:10px;border:1px solid;}
+.nw-danger{background:rgba(192,57,43,.07);border-color:rgba(192,57,43,.5);animation:nf 1.8s ease infinite;}
+.nw-caution{background:rgba(217,119,6,.06);border-color:rgba(217,119,6,.4);}
+.nw-safe{background:rgba(29,184,122,.04);border-color:rgba(29,184,122,.25);}
+.nw-live{background:rgba(192,57,43,.1);border-color:var(--red2);animation:nf .8s ease infinite;}
+@keyframes nf{0%,100%{opacity:1}50%{opacity:.7}}
+.nw-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.nw-icon{font-size:17px;flex-shrink:0;}
+.nw-title{font-family:"Syne",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;flex:1;}
+.nw-danger .nw-title,.nw-live .nw-title{color:var(--red2);}
+.nw-caution .nw-title{color:var(--orange);}
+.nw-safe .nw-title{color:var(--green2);}
+.nw-cd{font-family:"IBM Plex Mono",monospace;font-size:11px;flex-shrink:0;}
+.nw-danger .nw-cd,.nw-live .nw-cd{color:var(--red2);}
+.nw-caution .nw-cd{color:var(--orange);}
+.nw-text{font-size:12px;color:var(--text2);line-height:1.7;}
+.nw-text strong{color:var(--white);}
+
+/* INSTRUMENT BAR */
+.inst-bar{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.inst-row1{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.inst-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:66%;margin:0 auto;width:100%;}
+@media(max-width:680px){.inst-row2{max-width:100%;}}
+@media(max-width:480px){.inst-row1{grid-template-columns:1fr 1fr;}.inst-row2{max-width:100%;grid-template-columns:1fr 1fr;}}
+.ic{background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:12px 15px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.ic::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;transition:background .2s;}
+[data-s="XAUUSD"].active::after{background:var(--gold2);}
+[data-s="GBPUSD"].active::after{background:var(--cyan2);}
+[data-s="EURUSD"].active::after{background:var(--blue);}
+[data-s="NAS100"].active::after{background:#a78bfa;}
+[data-s="US30"].active::after{background:#f97316;}
+.ic.active{background:var(--bg3);}
+.ic-sym{font-family:"Syne",sans-serif;font-size:10px;font-weight:800;letter-spacing:3px;margin-bottom:2px;}
+[data-s="XAUUSD"] .ic-sym{color:var(--gold2);}
+[data-s="GBPUSD"] .ic-sym{color:var(--cyan2);}
+[data-s="EURUSD"] .ic-sym{color:#5ba3d0;}
+[data-s="NAS100"] .ic-sym{color:#a78bfa;}
+[data-s="US30"] .ic-sym{color:#f97316;}
+.ic-name{font-size:10px;color:var(--text2);margin-bottom:5px;}
+.ic-price{font-family:"IBM Plex Mono",monospace;font-size:19px;color:var(--white2);}
+.ic-chg{font-family:"IBM Plex Mono",monospace;font-size:10px;margin-top:2px;}
+.up{color:var(--green2);} .dn{color:var(--red2);}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:1fr 380px;gap:12px;}
+.left,.right{display:flex;flex-direction:column;gap:12px;}
+
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:5px;overflow:hidden;}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.pt{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;color:var(--text2);text-transform:uppercase;}
+.badge{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 8px;border-radius:2px;letter-spacing:1px;}
+.bc{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:var(--cyan2);}
+.bg{background:rgba(29,184,122,.08);border:1px solid rgba(29,184,122,.2);color:var(--green2);}
+.bo{background:rgba(200,150,42,.1);border:1px solid rgba(200,150,42,.3);color:var(--gold2);}
+.br{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:var(--red2);}
+.boff{background:rgba(26,58,80,.1);border:1px solid rgba(26,58,80,.3);color:var(--text2);}
+.pbody{padding:14px;}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:5px;}
+.ci{display:flex;align-items:flex-start;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px 12px;transition:all .3s;}
+.ci.pass{background:rgba(29,184,122,.04);border-color:rgba(29,184,122,.25);}
+.ci.fail{background:rgba(192,57,43,.03);border-color:rgba(192,57,43,.15);}
+.ci-icon{width:20px;height:20px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;}
+.pass .ci-icon{background:rgba(29,184,122,.15);color:var(--green2);border:1px solid rgba(29,184,122,.3);}
+.fail .ci-icon{background:rgba(192,57,43,.1);color:var(--red2);border:1px solid rgba(192,57,43,.25);}
+.ci-body{flex:1;}
+.ci-lbl{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:2px;text-transform:uppercase;}
+.pass .ci-lbl{color:var(--green2);} .fail .ci-lbl{color:var(--red2);}
+.ci-detail{font-size:11px;color:var(--text2);line-height:1.5;}
+.ci-detail strong{color:var(--white);}
+.ci-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 7px;border-radius:2px;flex-shrink:0;margin-top:1px;}
+.pass .ci-tag{background:rgba(29,184,122,.1);color:var(--green2);border:1px solid rgba(29,184,122,.2);}
+.fail .ci-tag{background:rgba(192,57,43,.08);color:var(--red2);border:1px solid rgba(192,57,43,.2);}
+
+/* VERDICT */
+.verdict{border-radius:5px;padding:16px 18px;text-align:center;position:relative;overflow:hidden;transition:all .4s;}
+.verdict.BUY{background:rgba(29,184,122,.05);border:1px solid rgba(29,184,122,.4);}
+.verdict.SELL{background:rgba(192,57,43,.05);border:1px solid rgba(192,57,43,.4);}
+.verdict.WAIT{background:rgba(217,119,6,.04);border:1px solid rgba(217,119,6,.25);}
+.verdict.RANGING{background:rgba(124,58,237,.04);border:1px solid rgba(124,58,237,.25);}
+.v-lbl{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-bottom:5px;}
+.v-dir{font-family:"Syne",sans-serif;font-weight:800;font-size:42px;letter-spacing:6px;line-height:1;}
+.BUY .v-dir{color:var(--green2);text-shadow:0 0 40px rgba(29,184,122,.4);}
+.SELL .v-dir{color:var(--red2);text-shadow:0 0 40px rgba(192,57,43,.4);}
+.WAIT .v-dir{color:var(--orange);font-size:28px;}
+.RANGING .v-dir{color:#9c6fec;font-size:26px;}
+.v-sub{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text2);margin-top:7px;letter-spacing:1px;line-height:1.8;}
+.v-sub .hl{color:var(--gold2);}
+
+/* TRIGGER */
+.trigger{border-radius:5px;padding:13px;border:1px solid var(--border);}
+.trig-go{background:rgba(29,184,122,.04);border-color:rgba(29,184,122,.35);}
+.trig-no{background:rgba(217,119,6,.03);border-color:rgba(217,119,6,.2);}
+.trig-hd{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;margin-bottom:9px;}
+.trig-go .trig-hd{color:var(--green2);} .trig-no .trig-hd{color:var(--orange);}
+.tr{display:flex;align-items:flex-start;gap:9px;padding:7px 9px;border-radius:3px;margin-bottom:5px;background:rgba(0,0,0,.25);border:1px solid var(--border);}
+.tr:last-child{margin-bottom:0;}
+.tr-icon{font-size:12px;flex-shrink:0;margin-top:1px;}
+.tr-txt{font-size:11px;color:var(--text);line-height:1.5;flex:1;}
+.tr-txt strong{color:var(--white2);}
+.tr-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 7px;border-radius:2px;flex-shrink:0;margin-top:2px;}
+.t-met{background:rgba(29,184,122,.1);color:var(--green2);border:1px solid rgba(29,184,122,.25);}
+.t-wait{background:rgba(26,58,80,.15);color:var(--text2);border:1px solid var(--border);}
+.t-warn{background:rgba(217,119,6,.08);color:var(--orange);border:1px solid rgba(217,119,6,.2);}
+
+/* LEVELS */
+.lc{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:11px;text-align:center;}
+.lc.e1{border-top:2px solid var(--cyan2);}
+.lc.sl{border-top:2px solid var(--red2);}
+.lc.tp1{border-top:2px solid var(--green);}
+.lc.e2{border-top:2px solid var(--gold2);}
+.lc.tp2{border-top:2px solid var(--gold2);}
+.l-name{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;margin-bottom:5px;}
+.lc.e1 .l-name{color:var(--cyan2);} .lc.sl .l-name{color:var(--red2);}
+.lc.tp1 .l-name{color:var(--green);} .lc.e2 .l-name,.lc.tp2 .l-name{color:var(--gold2);}
+.l-price{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--white2);margin-bottom:2px;}
+.l-pip{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text3);}
+
+/* RR BOX */
+.rr-box{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:13px;margin-bottom:10px;display:none;}
+.rr-nums{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:6px;text-align:center;margin-bottom:10px;}
+.rr-n{font-family:"Syne",sans-serif;font-size:24px;font-weight:800;}
+.rr-sep{font-size:18px;color:var(--text3);}
+.rr-lbl{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;margin-bottom:3px;}
+.rr-unit{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text3);margin-top:2px;}
+.rr-ratios{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;}
+.rr-rat{border-radius:3px;padding:8px;text-align:center;}
+.rr-rat-tp1{background:rgba(29,184,122,.06);border:1px solid rgba(29,184,122,.2);}
+.rr-rat-tp2{background:rgba(200,150,42,.06);border:1px solid rgba(200,150,42,.2);}
+.rr-rat-lbl{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text3);margin-bottom:3px;}
+.rr-rat-val{font-family:"Syne",sans-serif;font-size:18px;font-weight:800;}
+.rr-rat-tp1 .rr-rat-val{color:var(--green2);}
+.rr-rat-tp2 .rr-rat-val{color:var(--gold2);}
+.rr-explain{font-size:11px;color:var(--text2);line-height:1.7;padding:8px;background:var(--bg2);border-radius:3px;text-align:center;}
+
+/* NEWS MODULE TABS */
+.news-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;}
+.ntab{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:8px 6px;text-align:center;cursor:pointer;transition:all .2s;}
+.ntab.active{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.4);}
+.ntab-title{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text2);}
+.ntab.active .ntab-title{color:var(--red2);}
+.ntab-sub{font-size:9px;color:var(--text3);margin-top:2px;}
+
+/* STRADDLE CARDS */
+.strad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.strad-c{border-radius:4px;padding:12px;text-align:center;}
+.strad-buy{background:rgba(29,184,122,.06);border:1px solid rgba(29,184,122,.25);}
+.strad-sell{background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);}
+.strad-type{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:6px;}
+.strad-buy .strad-type{color:var(--green2);} .strad-sell .strad-type{color:var(--red2);}
+.strad-price{font-family:"IBM Plex Mono",monospace;font-size:16px;color:var(--white2);margin-bottom:4px;}
+.strad-detail{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text3);}
+
+/* OPEN TRADE MANAGER */
+.trade-manager{display:flex;flex-direction:column;gap:6px;}
+.tm-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;}
+.tm-opt{font-family:"Syne",sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;width:110px;flex-shrink:0;}
+.tm-opt-a{color:var(--red2);} .tm-opt-b{color:var(--gold2);} .tm-opt-c{color:var(--green2);}
+.tm-txt{font-size:11px;color:var(--text2);line-height:1.5;flex:1;}
+.tm-txt strong{color:var(--white);}
+
+/* NEWS ACCORDION */
+.nc-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:4px;margin-bottom:3px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:all .2s;user-select:none;}
+.nc-item:hover{border-color:var(--border2);background:rgba(255,255,255,.015);}
+.nc-item.nc-soon{border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.05);}
+.nc-item.nc-up{border-color:rgba(217,119,6,.3);}
+.nc-item.nc-expanded{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0;border-color:var(--border2);}
+.nc-body{display:none;background:var(--bg2);border:1px solid var(--border2);border-top:none;border-radius:0 0 4px 4px;padding:12px;margin-bottom:6px;}
+.nc-body.open{display:block;}
+.nc-time{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--cyan2);width:52px;flex-shrink:0;}
+.nc-impact{font-family:"IBM Plex Mono",monospace;font-size:8px;padding:2px 5px;border-radius:2px;flex-shrink:0;}
+.ih{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);color:var(--red2);}
+.im{background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);color:var(--orange);}
+.nc-name{font-size:11px;color:var(--text);flex:1;font-weight:600;}
+.nc-pair{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text3);}
+.nc-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 6px;border-radius:2px;flex-shrink:0;}
+.nc-soon-tag{background:rgba(192,57,43,.12);color:var(--red2);border:1px solid rgba(192,57,43,.25);}
+.nc-up-tag{background:rgba(217,119,6,.1);color:var(--orange);border:1px solid rgba(217,119,6,.2);}
+.nc-done-tag{background:rgba(26,58,80,.1);color:var(--text3);border:1px solid var(--border);}
+.nc-live-tag{background:rgba(192,57,43,.2);color:var(--red2);border:1px solid var(--red2);animation:pu 1s ease infinite;}
+.nc-chevron{font-size:10px;color:var(--text3);flex-shrink:0;transition:transform .2s;}
+.nc-item.nc-expanded .nc-chevron{transform:rotate(180deg);color:var(--cyan2);}
+.nc-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
+.nc-stat{background:var(--bg3);border-radius:3px;padding:8px;text-align:center;border:1px solid var(--border);}
+.nc-stat-lbl{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:1px;color:var(--text3);margin-bottom:4px;}
+.nc-stat-val{font-family:"Syne",sans-serif;font-size:15px;font-weight:800;color:var(--white2);}
+.nc-actual-pos{color:var(--green2)!important;}
+.nc-actual-neg{color:var(--red2)!important;}
+.nc-desc-txt{font-size:11px;color:var(--text2);line-height:1.75;margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:3px;border:1px solid var(--border);}
+.nc-impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.nc-impact-box{border-radius:3px;padding:8px;}
+.nc-ib-bull{background:rgba(29,184,122,.05);border:1px solid rgba(29,184,122,.2);}
+.nc-ib-bear{background:rgba(192,57,43,.05);border:1px solid rgba(192,57,43,.2);}
+.nc-ib-lbl{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:1px;margin-bottom:4px;}
+.nc-ib-bull .nc-ib-lbl{color:var(--green2);}
+.nc-ib-bear .nc-ib-lbl{color:var(--red2);}
+.nc-ib-txt{font-size:10px;color:var(--text2);line-height:1.5;}
+
+/* POST-NEWS ENTRY */
+.post-news-box{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:13px;}
+.pn-step{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);}
+.pn-step:last-child{border-bottom:none;}
+.pn-num{width:22px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:"Syne",sans-serif;font-size:11px;font-weight:800;flex-shrink:0;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:var(--cyan2);}
+.pn-txt{font-size:12px;color:var(--text2);line-height:1.6;} .pn-txt strong{color:var(--white);}
+
+/* AI BOX */
+.ai-box{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:12px;}
+.ai-top{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
+.ai-chip{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--cyan2);background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);padding:2px 7px;border-radius:2px;}
+.ai-mode{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text3);letter-spacing:1px;}
+.ai-txt{font-size:12px;line-height:1.8;color:var(--text2);min-height:55px;}
+.ai-txt strong{color:var(--white);}
+.cursor{display:inline-block;width:2px;height:13px;background:var(--cyan2);margin-left:2px;vertical-align:middle;animation:bl .7s step-end infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+
+/* BUTTON */
+.btn{width:100%;padding:12px;cursor:pointer;font-family:"Syne",sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;background:transparent;transition:all .3s;border-radius:4px;}
+.btn-p{border:1px solid rgba(6,182,212,.35);color:var(--cyan2);}
+.btn-p:hover:not(:disabled){background:rgba(6,182,212,.08);border-color:var(--cyan2);box-shadow:0 0 18px rgba(6,182,212,.12);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.bspin{display:none;width:10px;height:10px;border:2px solid rgba(6,182,212,.25);border-top-color:var(--cyan2);border-radius:50%;animation:sp .7s linear infinite;margin-right:7px;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.btn.loading .bspin{display:inline-block;}
+
+/* TF GUIDE */
+.tf-g{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.tf-i{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center;}
+.tf-i.active-tf{border-color:var(--cyan2);background:rgba(6,182,212,.04);}
+.tf-fr{font-family:"Syne",sans-serif;font-size:14px;font-weight:800;color:var(--white2);margin-bottom:3px;}
+.tf-pu{font-size:10px;color:var(--text2);line-height:1.4;}
+.tf-ac{font-size:10px;font-weight:700;margin-top:3px;letter-spacing:1px;}
+.tft{color:var(--gold2);} .tfs{color:var(--cyan2);} .tfe{color:var(--green2);}
+
+/* CHART */
+.chart-wrap{background:var(--bg2);border-radius:4px;height:420px;position:relative;overflow:hidden;margin-bottom:8px;}
+.chart-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+.tf-switcher{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.tf-btn{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;padding:4px 10px;border-radius:3px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);color:var(--text2);transition:all .2s;}
+.tf-btn.active{background:rgba(6,182,212,.1);border-color:var(--cyan2);color:var(--cyan2);}
+.tf-btn.tf-trend{border-color:rgba(200,150,42,.3);color:var(--gold2);}
+.tf-btn.tf-trend.active{background:rgba(200,150,42,.1);border-color:var(--gold2);color:var(--gold2);}
+.tf-btn.tf-entry{border-color:rgba(29,184,122,.3);color:var(--green2);}
+.tf-btn.tf-entry.active{background:rgba(29,184,122,.1);border-color:var(--green2);color:var(--green2);}
+
+/* TF TAB ROW — 6 timeframes */
+.tf-tab-row{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:7px;}
+.tf-tab-btn{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:4px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);transition:all .18s;gap:2px;}
+.tf-tab-btn:hover{border-color:var(--border2);background:rgba(255,255,255,.02);}
+.tf-tab-btn.active{background:rgba(6,182,212,.08);border-color:var(--cyan2);}
+.tf-tab-btn.tf-tab-trend.active{background:rgba(200,150,42,.08);border-color:var(--gold2);}
+.tf-tab-btn.tf-tab-trigger.active{background:rgba(29,184,122,.08);border-color:var(--green2);}
+.tf-tab-btn.tf-tab-setup.active{background:rgba(6,182,212,.08);border-color:var(--cyan2);}
+.tf-tab-lbl{font-family:"Syne",sans-serif;font-size:11px;font-weight:800;color:var(--white2);letter-spacing:1px;}
+.tf-tab-btn.active .tf-tab-lbl{color:var(--cyan2);}
+.tf-tab-btn.tf-tab-trend.active .tf-tab-lbl{color:var(--gold2);}
+.tf-tab-btn.tf-tab-trigger.active .tf-tab-lbl{color:var(--green2);}
+.tf-tab-role{font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:1px;}
+/* Rule bar */
+#tf-rule-bar{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.5px;color:var(--gold2);padding:6px 9px;background:rgba(200,150,42,.04);border:1px solid rgba(200,150,42,.12);border-radius:3px;margin-bottom:7px;line-height:1.6;}
+.tf-rule-tag{font-family:"IBM Plex Mono",monospace;font-size:8px;padding:2px 6px;border-radius:2px;margin-left:4px;background:rgba(200,150,42,.1);border:1px solid rgba(200,150,42,.2);color:var(--gold2);}
+.chart-snap-btn{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:1px;padding:5px 10px;border-radius:3px;cursor:pointer;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);color:var(--cyan2);transition:all .2s;display:flex;align-items:center;gap:5px;}
+.chart-snap-btn:hover{background:rgba(6,182,212,.14);border-color:var(--cyan2);}
+.snap-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--panel);border:1px solid var(--border2);border-radius:4px;z-index:10;min-width:170px;overflow:hidden;}
+.snap-menu.open{display:block;}
+.snap-opt{padding:9px 14px;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text2);cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;}
+.snap-opt:last-child{border-bottom:none;}
+.snap-opt:hover{background:rgba(6,182,212,.06);color:var(--cyan2);}
+.chart-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+
+
+/* ZONES */
+.zone-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:3px;padding:7px 10px;margin-bottom:5px;}
+.zi-ob-bull{border-left:3px solid rgba(29,184,122,.6);}
+.zi-ob-bear{border-left:3px solid rgba(192,57,43,.6);}
+.zi-fvg{border-left:3px solid rgba(6,182,212,.6);}
+.zi-liq{border-left:3px solid rgba(200,150,42,.6);}
+.z-type{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:1px;width:80px;flex-shrink:0;}
+.zi-ob-bull .z-type{color:var(--green2);} .zi-ob-bear .z-type{color:var(--red2);}
+.zi-fvg .z-type{color:var(--cyan2);} .zi-liq .z-type{color:var(--gold2);}
+.z-range{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--white2);flex:1;text-align:center;}
+.z-dist{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 6px;border-radius:2px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);}
+.z-near{color:var(--gold2);border-color:rgba(200,150,42,.3);background:rgba(200,150,42,.06);}
+
+/* TIMELINE */
+.tl{position:relative;height:28px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.main{grid-template-columns:1fr;}}
+@media(max-width:680px){.inst-bar{grid-template-columns:1fr;}.hsess{display:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hbrand">
+    <div class="hbrand-name">SMART MONEY</div>
+    <div class="hbrand-sub">INSTITUTIONAL TRADING SYSTEM · SMC + NEWS</div>
+  </div>
+  <div class="hsess" id="sess-blocks"></div>
+  <div class="hclock">
+    <div class="clock-lbl">GMT / UTC</div>
+    <div class="clock-val" id="clock">--:--:--</div>
+    <div class="clock-date" id="clock-date">---</div>
+  </div>
+</div>
+
+<!-- SESSION BANNER -->
+<div class="sess-banner sb-off" id="sess-banner">
+  <div class="sb-dot"></div>
+  <span id="banner-txt">Checking session...</span>
+  <span class="sb-cntd" id="banner-cd"></span>
+</div>
+
+<!-- NEWS WARNING -->
+<div class="news-warn" id="news-warn">
+  <div class="nw-top">
+    <div class="nw-icon" id="nw-icon">⚠️</div>
+    <div class="nw-title" id="nw-title">NEWS ALERT</div>
+    <div class="nw-cd" id="nw-cd"></div>
+  </div>
+  <div class="nw-text" id="nw-txt"></div>
+</div>
+
+<!-- INSTRUMENTS -->
+<div class="inst-bar">
+  <div class="inst-row1">
+    <div class="ic active" data-s="XAUUSD" onclick="selSym('XAUUSD',this)">
+      <div class="ic-sym">XAU/USD</div><div class="ic-name">Gold · Spot</div>
+      <div class="ic-price" id="p-XAUUSD">2,647.30</div>
+      <div class="ic-chg up" id="c-XAUUSD">+4.20 · +0.16%</div>
+    </div>
+    <div class="ic" data-s="GBPUSD" onclick="selSym('GBPUSD',this)">
+      <div class="ic-sym">GBP/USD</div><div class="ic-name">Pound · Dollar</div>
+      <div class="ic-price" id="p-GBPUSD">1.27142</div>
+      <div class="ic-chg dn" id="c-GBPUSD">-0.00218 · -0.17%</div>
+    </div>
+    <div class="ic" data-s="EURUSD" onclick="selSym('EURUSD',this)">
+      <div class="ic-sym">EUR/USD</div><div class="ic-name">Euro · Dollar</div>
+      <div class="ic-price" id="p-EURUSD">1.08234</div>
+      <div class="ic-chg up" id="c-EURUSD">+0.00112 · +0.10%</div>
+    </div>
+  </div>
+  <div class="inst-row2">
+    <div class="ic" data-s="NAS100" onclick="selSym('NAS100',this)">
+      <div class="ic-sym">NAS100</div><div class="ic-name">Nasdaq · Index</div>
+      <div class="ic-price" id="p-NAS100">19,842.50</div>
+      <div class="ic-chg up" id="c-NAS100">+124.30 · +0.63%</div>
+    </div>
+    <div class="ic" data-s="US30" onclick="selSym('US30',this)">
+      <div class="ic-sym">US30</div><div class="ic-name">Dow Jones · Index</div>
+      <div class="ic-price" id="p-US30">39,127.80</div>
+      <div class="ic-chg dn" id="c-US30">-87.40 · -0.22%</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<div class="left">
+
+  <!-- TF GUIDE -->
+  <div class="panel">
+    <div class="ph"><div class="pt">Timeframe Approach</div><div class="badge bc">TOP-DOWN</div></div>
+    <div class="pbody">
+      <div class="tf-g">
+        <div class="tf-i"><div class="tf-fr">H4</div><div class="tf-pu">Overall bias & trend</div><div class="tf-ac tft">TREND FILTER</div></div>
+        <div class="tf-i active-tf"><div class="tf-fr">H1</div><div class="tf-pu">Order Blocks & FVG</div><div class="tf-ac tfs">SETUP ZONE</div></div>
+        <div class="tf-i"><div class="tf-fr">M15</div><div class="tf-pu">Rejection candle trigger</div><div class="tf-ac tfe">ENTRY TRIGGER</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMC CHECKLIST -->
+  <div class="panel">
+    <div class="ph"><div class="pt">SMC Entry Checklist</div><div class="badge boff" id="check-score">0 / 6 CONDITIONS</div></div>
+    <div class="pbody"><div class="checklist" id="checklist">
+      <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text3);padding:12px;text-align:center">Press Analyse to run SMC checklist</div>
+    </div></div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict WAIT" id="verdict">
+    <div class="v-lbl">SMART MONEY VERDICT</div>
+    <div class="v-dir" id="v-dir">WAIT</div>
+    <div class="v-sub" id="v-sub">Run analysis to get your SMC signal</div>
+  </div>
+
+  <!-- TRIGGER -->
+  <div class="trigger trig-no" id="trigger-box">
+    <div class="trig-hd" id="trig-hd">⏳ WAITING FOR ENTRY CONDITIONS</div>
+    <div id="trig-rows"></div>
+  </div>
+
+  <!-- TRADE LEVELS -->
+  <div class="panel">
+    <div class="ph"><div class="pt">Trade Levels</div><div class="badge boff" id="rr-badge">R:R —</div></div>
+    <div class="pbody">
+
+      <!-- RR DISPLAY -->
+      <div class="rr-box" id="rr-box">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-bottom:10px;text-align:center">RISK TO REWARD BREAKDOWN</div>
+        <div class="rr-nums">
+          <div><div class="rr-lbl" style="color:var(--red2)">YOU RISK</div><div class="rr-n" style="color:var(--red2)" id="rr-risk">—</div><div class="rr-unit">PIPS</div></div>
+          <div class="rr-sep">:</div>
+          <div><div class="rr-lbl" style="color:var(--green2)">TP1</div><div class="rr-n" style="color:var(--green2)" id="rr-tp1p">—</div><div class="rr-unit">PIPS</div></div>
+          <div class="rr-sep">:</div>
+          <div><div class="rr-lbl" style="color:var(--gold2)">TP2</div><div class="rr-n" style="color:var(--gold2)" id="rr-tp2p">—</div><div class="rr-unit">PIPS</div></div>
+        </div>
+        <div class="rr-ratios">
+          <div class="rr-rat rr-rat-tp1"><div class="rr-rat-lbl">R:R TO TP1</div><div class="rr-rat-val" id="rr-r1">1:—</div></div>
+          <div class="rr-rat rr-rat-tp2"><div class="rr-rat-lbl">R:R TO TP2</div><div class="rr-rat-val" id="rr-r2">1:—</div></div>
+        </div>
+        <div class="rr-explain" id="rr-exp">—</div>
+
+        <!-- 10% POSITION SIZE CALCULATOR -->
+        <div style="margin-top:10px;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;padding:12px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:8px">&#9; POSITION SIZE — 10% FIXED FRACTIONAL</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap">Account $</span>
+            <input id="acc-bal" type="number" value="100" min="1" step="1"
+              oninput="calcPositionSize()"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:6px 8px;color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;outline:none">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+            <div style="background:var(--bg3);border-radius:3px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text3);margin-bottom:3px">10% RISK</div>
+              <div id="ps-risk" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--red2)">$—</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:3px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text3);margin-bottom:3px">LOT SIZE</div>
+              <div id="ps-lots" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--green2)">—</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:3px;padding:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text3);margin-bottom:3px">PROFIT @ TP1</div>
+              <div id="ps-profit" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--gold2)">$—</div>
+            </div>
+          </div>
+          <div id="ps-note" style="margin-top:7px;font-size:10px;color:var(--text3);text-align:center;line-height:1.5">Enter balance above — lot size updates live with every setup</div>
+        </div>
+      </div>
+
+      <!-- ENTRY 1 -->
+      <div style="margin-bottom:10px">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--cyan2);margin-bottom:6px;padding:4px 0;border-bottom:1px solid var(--border)">① FIRST ENTRY — ORDER BLOCK (M15 rejection candle)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+          <div class="lc e1"><div class="l-name">ENTRY 1</div><div class="l-price" id="l-e1">—</div><div class="l-pip" id="l-e1n">OB zone</div></div>
+          <div class="lc sl"><div class="l-name">STOP LOSS</div><div class="l-price" id="l-sl">—</div><div class="l-pip" id="l-sln">Below OB</div></div>
+          <div class="lc tp1"><div class="l-name">TP1 — 50%</div><div class="l-price" id="l-tp1">—</div><div class="l-pip" id="l-tp1n">First target</div></div>
+        </div>
+      </div>
+
+      <!-- ENTRY 2 -->
+      <div style="margin-bottom:10px">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--gold2);margin-bottom:6px;padding:4px 0;border-bottom:1px solid var(--border)">② SECOND ENTRY — FVG RE-ENTRY (after TP1, on pullback)</div>
+        <div style="background:rgba(200,150,42,.03);border:1px solid rgba(200,150,42,.15);border-radius:4px;padding:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px">
+            <div class="lc e2"><div class="l-name">ENTRY 2</div><div class="l-price" id="l-e2">—</div><div class="l-pip">FVG pullback</div></div>
+            <div class="lc sl"><div class="l-name">STOP LOSS</div><div class="l-price" id="l-sl2">—</div><div class="l-pip">Same as E1</div></div>
+            <div class="lc tp2"><div class="l-name">TP2 — FULL</div><div class="l-price" id="l-tp2">—</div><div class="l-pip" id="l-tp2n">Full run</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7" id="e2-explain">Run analysis to see second entry levels.</div>
+        </div>
+      </div>
+
+      <!-- POSITION MANAGEMENT -->
+      <div id="pos-mgmt" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:11px">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-bottom:7px">POSITION MANAGEMENT RULES</div>
+        <div id="pos-rules" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NEWS TRADING MODULE -->
+  <div class="panel">
+    <div class="ph">
+      <div class="pt">News Trading Module</div>
+      <div class="badge br" id="news-mod-badge">LOADING...</div>
+    </div>
+    <div class="pbody">
+
+      <!-- NEXT NEWS COUNTDOWN -->
+      <div style="text-align:center;padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;margin-bottom:12px">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-bottom:5px">NEXT HIGH-IMPACT NEWS (NIGERIA TIME)</div>
+        <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;color:var(--white2)" id="next-news-timer">--:--:--</div>
+        <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text2);margin-top:4px" id="next-news-name">—</div>
+        <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text3);margin-top:2px" id="next-news-time">—</div>
+      </div>
+
+      <!-- NEWS MODULE TABS -->
+      <div class="news-tabs">
+        <div class="ntab active" onclick="setNewsTab(0,this)"><div class="ntab-title">STRADDLE</div><div class="ntab-sub">Before news</div></div>
+        <div class="ntab" onclick="setNewsTab(1,this)"><div class="ntab-title">POST-NEWS</div><div class="ntab-sub">After drop</div></div>
+        <div class="ntab" onclick="setNewsTab(2,this)"><div class="ntab-title">OPEN TRADE</div><div class="ntab-sub">Manage it</div></div>
+        <div class="ntab" onclick="setNewsTab(3,this)"><div class="ntab-title">AI BRIEF</div><div class="ntab-sub">Full analysis</div></div>
+      </div>
+
+      <!-- TAB 0: STRADDLE -->
+      <div id="ntab-content-0">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--gold2);margin-bottom:8px">PLACE BOTH STOPS 30 MINS BEFORE NEWS · NIGERIA TIME</div>
+        <div class="strad-grid">
+          <div class="strad-c strad-buy">
+            <div class="strad-type">▲ BUY STOP</div>
+            <div class="strad-price" id="s-buy">—</div>
+            <div class="strad-detail">SL: <span id="s-buy-sl">—</span></div>
+            <div class="strad-detail">TP1: <span id="s-buy-tp1">—</span></div>
+            <div class="strad-detail">TP2: <span id="s-buy-tp2">—</span></div>
+          </div>
+          <div class="strad-c strad-sell">
+            <div class="strad-type">▼ SELL STOP</div>
+            <div class="strad-price" id="s-sell">—</div>
+            <div class="strad-detail">SL: <span id="s-sell-sl">—</span></div>
+            <div class="strad-detail">TP1: <span id="s-sell-tp1">—</span></div>
+            <div class="strad-detail">TP2: <span id="s-sell-tp2">—</span></div>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px;margin-top:10px">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--text2);margin-bottom:6px">STRADDLE RULES</div>
+          <div style="display:flex;flex-direction:column;gap:5px" id="strad-rules-list"></div>
+        </div>
+      </div>
+
+      <!-- TAB 1: POST-NEWS ENTRY -->
+      <div id="ntab-content-1" style="display:none">
+        <div class="post-news-box">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--cyan2);margin-bottom:10px">HIGHER WIN RATE — WAIT FOR THE FAKE OUT FIRST</div>
+          <div class="pn-step">
+            <div class="pn-num">1</div>
+            <div class="pn-txt">Let the news drop at <strong>2:30 PM Nigeria time.</strong> Do NOT enter immediately. Spreads are wide and price will fake out first.</div>
+          </div>
+          <div class="pn-step">
+            <div class="pn-num">2</div>
+            <div class="pn-txt">Watch the <strong>first 5-minute candle after news.</strong> Wait for it to fully close. This candle shows you the real direction after the fake out.</div>
+          </div>
+          <div class="pn-step">
+            <div class="pn-num">3</div>
+            <div class="pn-txt">Enter in the direction of that closed candle. If it closed bullish — <strong>BUY</strong> at the open of the next candle. If bearish — <strong>SELL.</strong></div>
+          </div>
+          <div class="pn-step">
+            <div class="pn-num">4</div>
+            <div class="pn-txt">Stop Loss: below the wick of that 5-min candle. For NFP on Gold — minimum <strong>60 pip SL.</strong> News candles have wide wicks.</div>
+          </div>
+          <div class="pn-step">
+            <div class="pn-num">5</div>
+            <div class="pn-txt">Take Profit: <strong>TP1 at 80 pips, TP2 at 150 pips</strong> for Gold. <strong>TP1 at 50 pips, TP2 at 100 pips</strong> for GBP/USD and EUR/USD. These are NFP average ranges.</div>
+          </div>
+          <div class="pn-step">
+            <div class="pn-num">6</div>
+            <div class="pn-txt">After TP1 hits — move SL to break-even immediately. Let the rest run. NFP moves often continue for <strong>2–4 hours</strong> after release.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: OPEN TRADE MANAGER -->
+      <div id="ntab-content-2" style="display:none">
+        <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--text2);margin-bottom:8px">IF YOU HAVE AN OPEN SMC TRADE WHEN NEWS IS APPROACHING</div>
+        <div class="trade-manager">
+          <div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);border-radius:4px;padding:11px;margin-bottom:6px">
+            <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--red2);margin-bottom:6px">IF YOUR TRADE IS IN LOSS</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--white)">Close it immediately.</strong> Do not hold a losing trade through high-impact news. News will not save a bad trade — it will make it worse. Take the small loss now before the spread widens and your loss doubles.</div>
+          </div>
+          <div style="background:rgba(217,119,6,.05);border:1px solid rgba(217,119,6,.2);border-radius:4px;padding:11px;margin-bottom:6px">
+            <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--orange);margin-bottom:6px">IF YOUR TRADE IS AT BREAK-EVEN OR SMALL PROFIT (under 20 pips)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--white)">Move SL to break-even</strong> and reduce position size by 50%. You are now protected. If news kills the trade you lose nothing. If news pushes your direction you still profit.</div>
+          </div>
+          <div style="background:rgba(29,184,122,.05);border:1px solid rgba(29,184,122,.2);border-radius:4px;padding:11px;margin-bottom:6px">
+            <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--green2);margin-bottom:6px">IF YOUR TRADE IS IN GOOD PROFIT (20–50 pips up)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--white)">Close 50% of your position</strong> to lock in profit. Move SL on the remaining 50% to break-even. You have now guaranteed a profitable trade regardless of what news does.</div>
+          </div>
+          <div style="background:rgba(200,150,42,.05);border:1px solid rgba(200,150,42,.2);border-radius:4px;padding:11px">
+            <div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--gold2);margin-bottom:6px">IF YOUR TRADE IS IN STRONG PROFIT (50+ pips up)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7"><strong style="color:var(--white)">Close 75% of your position</strong> and move SL to lock in at least 30 pips on the remaining 25%. Let it ride. If news continues in your direction you collect the extra bonus. This is the best position to be in.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: AI NEWS BRIEF -->
+      <div id="ntab-content-3" style="display:none">
+        <div class="ai-box" style="margin-bottom:10px">
+          <div class="ai-top"><div class="ai-chip">CLAUDE AI</div><div class="ai-mode">NEWS IMPACT ANALYSIS</div></div>
+          <div class="ai-txt" id="news-ai-txt">Select a news event from the calendar below, then click Analyse News to get the full AI breakdown of expected direction, volatility, and strategy.</div>
+        </div>
+        <button class="btn btn-p" id="news-ai-btn" onclick="runNewsAI()">
+          <span class="bspin" id="news-spin"></span>
+          <span id="news-btn-txt">⚡ Analyse Next News Event</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SMC AI -->
+  <div class="panel">
+    <div class="ph"><div class="pt">AI — SMC Analysis</div><div class="badge bc">CLAUDE AI</div></div>
+    <div class="pbody">
+      <div class="ai-box" style="margin-bottom:10px">
+        <div class="ai-top"><div class="ai-chip">SMC MODE</div><div class="ai-mode">OB · FVG · BOS/CHoCH · Liquidity · Structure</div></div>
+        <div class="ai-txt" id="ai-txt">Press Analyse to get a full Smart Money Concepts breakdown — structure bias, active order blocks, fair value gaps, liquidity targets, and your exact M15 entry trigger.</div>
+      </div>
+      <button class="btn btn-p" id="ai-btn" onclick="runAI()">
+        <span class="bspin" id="ai-spin"></span>
+        <span id="ai-btn-txt">⚡ Analyse SMC Setup</span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- end left -->
+<div class="right">
+
+  <!-- CHART — TradingView Live -->
+  <div class="panel" id="chart-panel">
+    <div class="ph" style="flex-wrap:wrap;gap:6px;">
+      <div class="pt" id="chart-title">XAUUSD — H1 · LIVE</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <div class="badge boff" id="chart-bias">LIVE CHART</div>
+        <div style="position:relative">
+          <button class="chart-snap-btn" onclick="toggleSnapMenu()" id="snap-btn">📸 ▾</button>
+          <div class="snap-menu" id="snap-menu">
+            <div class="snap-opt" onclick="snapDownload()">⬇️ Download PNG</div>
+            <div class="snap-opt" onclick="snapCopy()">📋 Copy to Clipboard</div>
+            <div class="snap-opt" onclick="snapShare()">📤 Share / WhatsApp</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pbody" style="padding:8px 10px 10px">
+
+      <!-- TF TABS -->
+      <div class="tf-tab-row">
+        <button class="tf-tab-btn" onclick="setChartTF('1',this)">
+          <span class="tf-tab-lbl">M1</span>
+          <span class="tf-tab-role" style="color:var(--text3)">PRECISION</span>
+        </button>
+        <button class="tf-tab-btn" onclick="setChartTF('5',this)">
+          <span class="tf-tab-lbl">M5</span>
+          <span class="tf-tab-role" style="color:var(--text3)">CONFIRM</span>
+        </button>
+        <button class="tf-tab-btn tf-tab-trigger" onclick="setChartTF('15',this)">
+          <span class="tf-tab-lbl">M15</span>
+          <span class="tf-tab-role" style="color:var(--green2)">TRIGGER</span>
+        </button>
+        <button class="tf-tab-btn tf-tab-setup active" onclick="setChartTF('60',this)">
+          <span class="tf-tab-lbl">H1</span>
+          <span class="tf-tab-role" style="color:var(--cyan2)">SETUP</span>
+        </button>
+        <button class="tf-tab-btn tf-tab-trend" onclick="setChartTF('240',this)">
+          <span class="tf-tab-lbl">H4</span>
+          <span class="tf-tab-role" style="color:var(--gold2)">TREND</span>
+        </button>
+        <button class="tf-tab-btn" onclick="setChartTF('D',this)">
+          <span class="tf-tab-lbl">D1</span>
+          <span class="tf-tab-role" style="color:var(--text3)">DAILY</span>
+        </button>
+      </div>
+
+      <!-- Rule bar -->
+      <div id="tf-rule-bar">🎯 H1 = SETUP ZONE — Find Order Block + FVG. Wait for price to return here. This is where your setup forms.</div>
+
+      <!-- TradingView Widget -->
+      <div class="chart-wrap" id="tv-container">
+        <div id="tradingview_chart" style="width:100%;height:100%;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SMC ZONES -->
+  <div class="panel">
+    <div class="ph"><div class="pt">Key SMC Zones</div><div class="badge boff" id="zones-badge">0 zones</div></div>
+    <div class="pbody"><div id="zones-list"><div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text3);padding:10px;text-align:center">Select instrument and analyse</div></div></div>
+  </div>
+
+  <!-- NEWS CALENDAR — collapsible dropdown -->
+  <div class="panel" id="news-panel">
+    <div class="ph" style="cursor:pointer;" onclick="toggleNewsPanel()">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="pt">📰 Economic News Calendar</div>
+        <div class="badge br" id="cal-badge">Loading...</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3)">WAT = GMT+1</div>
+        <div id="news-panel-chevron" style="font-size:12px;color:var(--cyan2);transition:transform .25s;">▼</div>
+      </div>
+    </div>
+    <!-- Collapsed by default -->
+    <div id="news-panel-body" style="display:none;">
+      <div style="padding:10px 12px 0">
+        <div id="news-cal"></div>
+        <div style="margin:8px 0 10px;padding:8px;background:rgba(192,57,43,.04);border:1px solid rgba(192,57,43,.15);border-radius:3px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--red2);letter-spacing:2px;margin-bottom:4px">THE 3 RULES</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7">
+            <strong style="color:var(--white)">30 mins before HIGH news</strong> — no new trades, manage open positions.<br>
+            <strong style="color:var(--white)">5 mins after news drops</strong> — enter post-news using closed 5M candle direction.<br>
+            <strong style="color:var(--white)">Never trade NFP or CPI blind</strong> — always check expected vs actual first.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION TIMELINE -->
+  <div class="panel">
+    <div class="ph"><div class="pt">24H Timeline (GMT)</div><div class="badge bc" id="active-sess">—</div></div>
+    <div class="pbody">
+      <div class="tl" id="timeline"><div id="tl-now" style="position:absolute;top:0;bottom:0;width:2px;background:var(--gold2);box-shadow:0 0 6px var(--gold2);z-index:2"></div></div>
+      <div style="height:20px;position:relative;margin-bottom:10px" id="tl-labels"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:9px">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--text2);letter-spacing:2px;margin-bottom:4px">LONDON · BEST</div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--white2)">09:00–18:00 WAT</div>
+          <div style="font-size:10px;margin-top:3px" id="s-ldn">—</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:9px">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--text2);letter-spacing:2px;margin-bottom:4px">NY OVERLAP · BEST</div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--white2)">14:00–18:00 WAT</div>
+          <div style="font-size:10px;margin-top:3px" id="s-ny">—</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:9px">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--text2);letter-spacing:2px;margin-bottom:4px">ASIAN · WATCH ONLY</div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--white2)">01:00–09:00 WAT</div>
+          <div style="font-size:10px;margin-top:3px" id="s-asian">—</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:9px">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--text2);letter-spacing:2px;margin-bottom:4px">NFP · MONTHLY</div>
+          <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--white2)">2:30 PM WAT · 1st Fri</div>
+          <div style="font-size:10px;color:var(--red2);margin-top:3px">⭐ Your favourite event</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end right -->
+</div><!-- end main -->
+</div><!-- end wrap -->
+
+<div style="text-align:center;padding:24px 16px 32px;border-top:1px solid rgba(255,255,255,0.06);margin-top:4px;">
+  <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:0.15em;color:var(--text3);text-transform:uppercase;">
+    © 2026 Etinosa Tope · All Rights Reserved
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// TWELVE DATA LIVE PRICE SYSTEM
+// ═══════════════════════════════════════════════
+var TWELVEDATA_KEY = "6a102607aaa74506b897e8b6fed9eb70";
+
+// Twelve Data symbol map
+var TD_SYMBOLS = {
+  XAUUSD: "XAU/USD",
+  GBPUSD: "GBP/USD",
+  EURUSD: "EUR/USD",
+  NAS100: "NDX",
+  US30:   "DJI"
+};
+
+// Static instrument metadata
+var MD = {
+  XAUUSD:{price:0,prev:0,high:0,low:0,dec:2,pip:0.1,  name:"GOLD · SPOT",       pipVal:0.10},
+  GBPUSD:{price:0,prev:0,high:0,low:0,dec:5,pip:0.0001,name:"POUND · DOLLAR",    pipVal:0.10},
+  EURUSD:{price:0,prev:0,high:0,low:0,dec:5,pip:0.0001,name:"EURO · DOLLAR",     pipVal:0.10},
+  NAS100:{price:0,prev:0,high:0,low:0,dec:2,pip:1,     name:"NASDAQ · INDEX",    pipVal:0.10},
+  US30:  {price:0,prev:0,high:0,low:0,dec:2,pip:1,     name:"DOW JONES · INDEX", pipVal:0.10}
+};
+
+var sym = "XAUUSD";
+var lastAnalysis = null;
+var priceData = {};
+var marketIsOpen = false;
+
+// Init empty price history
+for(var _s in MD){ priceData[_s] = []; }
+
+// ── Market open/closed check ──────────────────
+function isMarketOpen(){
+  var now = new Date();
+  var day = now.getUTCDay(); // 0=Sun, 6=Sat
+  var h   = now.getUTCHours();
+  var m   = now.getUTCMinutes();
+  var utcMins = h*60 + m;
+  if(day === 6) return false;
+  if(day === 0 && utcMins < 21*60) return false;
+  return true;
+}
+
+// ── Update one instrument card ────────────────
+function updateCard(s){
+  var d   = MD[s];
+  if(d.price === 0) return;
+  var chg = d.price - d.prev;
+  var pct = d.prev > 0 ? (chg/d.prev*100).toFixed(2) : "0.00";
+  var isUp = chg >= 0;
+
+  var pe = document.getElementById("p-"+s);
+  if(pe){
+    if(s==="NAS100"||s==="US30")
+      pe.textContent = d.price.toLocaleString("en-US",{minimumFractionDigits:2});
+    else if(s==="XAUUSD")
+      pe.textContent = d.price.toLocaleString("en-US",{minimumFractionDigits:2});
+    else
+      pe.textContent = d.price.toFixed(5);
+  }
+  var ce = document.getElementById("c-"+s);
+  if(ce){
+    if(!marketIsOpen){
+      ce.textContent = "MARKET CLOSED";
+      ce.className = "ic-chg";
+      ce.style.color = "var(--text3)";
+      return;
+    }
+    var chgStr = (s==="XAUUSD"||s==="NAS100"||s==="US30")
+      ? (isUp?"+":"")+chg.toFixed(2)
+      : (isUp?"+":"")+chg.toFixed(5);
+    ce.textContent = chgStr + " · " + (isUp?"+":"") + pct + "%";
+    ce.className = "ic-chg " + (isUp?"up":"dn");
+    ce.style.color = "";
+  }
+}
+
+// ── Fetch all prices individually (free tier compatible) ──
+async function fetchAllPrices(){
+  marketIsOpen = isMarketOpen();
+  var symbols = {
+    XAUUSD: "XAU/USD",
+    GBPUSD: "GBP/USD",
+    EURUSD: "EUR/USD",
+    NAS100: "QQQ",
+    US30:   "DIA"
+  };
+  for(var k in symbols){
+    try {
+      var tsym = encodeURIComponent(symbols[k]);
+      var url = "https://api.twelvedata.com/quote?symbol="+tsym+"&apikey="+TWELVEDATA_KEY;
+      var res = await fetch(url);
+      var data = await res.json();
+      if(data && data.close && parseFloat(data.close) > 0){
+        var d = MD[k];
+        d.price = +parseFloat(data.close).toFixed(d.dec);
+        d.prev  = +parseFloat(data.previous_close || data.close).toFixed(d.dec);
+        d.high  = +parseFloat(data.high || data.close).toFixed(d.dec);
+        d.low   = +parseFloat(data.low  || data.close).toFixed(d.dec);
+        priceData[k].push(d.price);
+        if(priceData[k].length > 120) priceData[k].shift();
+        updateCard(k);
+      }
+    } catch(e){ console.warn("Price fetch error", k, e); }
+    // Small delay between calls — free tier rate limit
+    await new Promise(function(r){ setTimeout(r, 300); });
+  }
+}
+
+// ── Fallback prices if API fails ──
+var FALLBACK_PRICES = {
+  XAUUSD: {price:5114.00, prev:5081.11, high:5175.06, low:5062.89},
+  GBPUSD: {price:1.27142, prev:1.27360, high:1.27800, low:1.26900},
+  EURUSD: {price:1.08234, prev:1.08122, high:1.08500, low:1.07900},
+  NAS100: {price:19842.50,prev:19718.20,high:19950.00,low:19600.00},
+  US30:   {price:41850.00,prev:41963.40,high:42100.00,low:41600.00}
+};
+
+function loadFallbackPrices(){
+  for(var k in FALLBACK_PRICES){
+    var fb = FALLBACK_PRICES[k];
+    var d = MD[k];
+    if(d.price === 0){
+      d.price = fb.price; d.prev = fb.prev; d.high = fb.high; d.low = fb.low;
+      priceData[k].push(d.price);
+      updateCard(k);
+    }
+  }
+}
+
+// ── Boot: wait for full page load then run everything ──
+window.addEventListener("load", function(){
+  loadFallbackPrices(); // show prices immediately
+  fetchAllPrices().then(function(){
+    loadFallbackPrices(); // update any that failed live fetch
+    setTimeout(function(){ runAI(); }, 1000);
+  }).catch(function(){
+    setTimeout(function(){ runAI(); }, 1000);
+  });
+  setInterval(fetchAllPrices, 15000);
+});
+
+// ── Weekend/closed status check every minute ──
+function showMarketStatus(){
+  marketIsOpen = isMarketOpen();
+  if(!marketIsOpen){
+    for(var k in MD){
+      var ce = document.getElementById("c-"+k);
+      if(ce){ ce.textContent="MARKET CLOSED"; ce.className="ic-chg"; ce.style.color="var(--text3)"; }
+    }
+  }
+}
+showMarketStatus();
+setInterval(showMarketStatus, 60000);
+
+
+
+
+// ═══════════════════════════════════════════════
+// NEWS EVENTS (All major events, GMT times)
+// ═══════════════════════════════════════════════
+var NEWS = [
+  {day:1,h:9, m:0, imp:"MED", name:"EUR German CPI",          pairs:["EURUSD"],                             off:20,sl:35,tp1:60,tp2:120,prev:"2.2%",forecast:"2.4%",actual:"",desc:"German Consumer Price Index measures inflation in Germany. Higher than expected = EUR bullish. Gold may react if USD weakens."},
+  {day:2,h:9, m:30,imp:"HIGH",name:"UK Employment / Wages",   pairs:["GBPUSD"],                             off:25,sl:40,tp1:70,tp2:140,prev:"4.2%",forecast:"4.3%",actual:"",desc:"UK jobs data and wage growth. Higher wages = BOE may keep rates high = GBP bullish. Key driver for GBP/USD."},
+  {day:2,h:13,m:30,imp:"HIGH",name:"US CPI Inflation",        pairs:["XAUUSD","EURUSD","GBPUSD","NAS100","US30"],off:30,sl:50,tp1:90,tp2:180,prev:"3.1%",forecast:"3.0%",actual:"",desc:"US inflation data. LOWER than expected = Fed may cut rates = Gold rallies, Dollar weakens, indices may pump. HIGHER = opposite."},
+  {day:3,h:9, m:30,imp:"HIGH",name:"UK CPI Inflation",        pairs:["GBPUSD"],                             off:25,sl:40,tp1:70,tp2:140,prev:"4.0%",forecast:"3.8%",actual:"",desc:"UK inflation. Higher than expected = BOE stays hawkish = GBP rallies. Major mover for Cable."},
+  {day:3,h:13,m:30,imp:"MED", name:"US PPI Data",             pairs:["XAUUSD","NAS100","US30"],              off:20,sl:35,tp1:60,tp2:110,prev:"0.2%",forecast:"0.1%",actual:"",desc:"Producer prices — leading indicator for CPI. Lower PPI = lower future CPI = Gold bullish, indices may rally."},
+  {day:3,h:18,m:0, imp:"HIGH",name:"FOMC Meeting Minutes",    pairs:["XAUUSD","EURUSD","GBPUSD","NAS100","US30"],off:30,sl:55,tp1:100,tp2:200,prev:"—",forecast:"Hawkish",actual:"",desc:"Fed minutes reveal rate decision thinking. Dovish tone = Gold pumps, indices rally. Hawkish = Dollar up, Gold down."},
+  {day:4,h:12,m:15,imp:"HIGH",name:"ECB Interest Rate",       pairs:["EURUSD","GBPUSD"],                    off:30,sl:50,tp1:90,tp2:180,prev:"4.50%",forecast:"4.25%",actual:"",desc:"ECB rate decision. Cut = EUR bearish. Hold = EUR stable. Surprise hike = EUR pumps. Watch press conference for guidance."},
+  {day:4,h:11,m:0, imp:"HIGH",name:"BOE Interest Rate",       pairs:["GBPUSD"],                             off:25,sl:45,tp1:80,tp2:160,prev:"5.25%",forecast:"5.25%",actual:"",desc:"Bank of England rate decision. Hold expected. Surprise cut = GBP sells off hard. Hawkish statement = GBP spike up."},
+  {day:4,h:13,m:30,imp:"HIGH",name:"US Jobless Claims",       pairs:["XAUUSD","GBPUSD","NAS100","US30"],     off:20,sl:35,tp1:65,tp2:130,prev:"220K",forecast:"215K",actual:"",desc:"Weekly US unemployment claims. Higher claims = weak jobs = Fed dovish = Gold up, indices mixed. Lower = USD strong."},
+  {day:5,h:13,m:30,imp:"HIGH",name:"US NFP & Unemployment",   pairs:["XAUUSD","GBPUSD","EURUSD","NAS100","US30"],off:40,sl:65,tp1:120,tp2:250,prev:"275K",forecast:"200K",actual:"",desc:"The biggest monthly event. NFP = jobs added. Higher than expected = USD pumps, Gold may drop initially. Lower = Gold pumps, indices sell. Watch the unemployment rate too."},
+  {day:5,h:15,m:0, imp:"MED", name:"US Consumer Sentiment",   pairs:["XAUUSD","NAS100","US30"],              off:20,sl:35,tp1:60,tp2:110,prev:"79.4",forecast:"80.0",actual:"",desc:"University of Michigan consumer sentiment. Higher = consumers confident = USD may strengthen. Matters more for indices than Gold."}
+];
+
+function getEvents(){
+  var now=new Date();
+  var dow=now.getUTCDay();
+  var result=[];
+  for(var i=0;i<NEWS.length;i++){
+    var ev=NEWS[i];
+    var d=new Date(now);
+    var diff=ev.day-dow;
+    d.setUTCDate(d.getUTCDate()+diff);
+    d.setUTCHours(ev.h,ev.m,0,0);
+    var wh=ev.h+1;
+    var wt=(wh<10?"0":"")+wh+":"+(ev.m<10?"0":"")+ev.m;
+    var mins=Math.round((d-now)/60000);
+    if(mins>-120){
+      result.push({day:ev.day,h:ev.h,m:ev.m,imp:ev.imp,name:ev.name,pairs:ev.pairs,off:ev.off,sl:ev.sl,tp1:ev.tp1,tp2:ev.tp2,watTime:wt,mins:mins,prev:ev.prev||"—",forecast:ev.forecast||"—",actual:ev.actual||"",desc:ev.desc||""});
+    }
+  }
+  result.sort(function(a,b){return a.mins-b.mins;});
+  return result;
+}
+
+function fmt(v){
+  if(sym==="XAUUSD"||sym==="NAS100"||sym==="US30") return v.toFixed(2);
+  return v.toFixed(5);
+}
+function fmt_val(v,dec){return v.toFixed(dec);}
+function ghf(){return new Date().getUTCHours()+new Date().getUTCMinutes()/60;}
+function isWknd(){var d=new Date().getUTCDay();return d===0||d===6;}
+
+// ═══════════════════════════════════════════════
+// CLOCK & SESSION
+// ═══════════════════════════════════════════════
+function updateClock(){
+  var now=new Date();
+  var h=now.getUTCHours(),m=now.getUTCMinutes(),s=now.getUTCSeconds();
+  var cl=document.getElementById("clock");
+  if(cl) cl.textContent=(h<10?"0":"")+h+":"+(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+  var cd=document.getElementById("clock-date");
+  if(cd) cd.textContent=now.toUTCString().slice(5,16);
+  var gh=ghf();
+  // Session blocks
+  var sdefs=[
+    {lbl:"ASIAN",t:"00:00–08:00",on:gh>=0&&gh<8&&!isWknd()},
+    {lbl:"LONDON",t:"08:00–13:00",on:gh>=8&&gh<13&&!isWknd()},
+    {lbl:"NY OVERLAP",t:"13:00–17:00",on:gh>=13&&gh<17&&!isWknd()},
+    {lbl:"NY LATE",t:"17:00–22:00",on:gh>=17&&gh<22&&!isWknd()}
+  ];
+  var sb=document.getElementById("sess-blocks");
+  if(sb){
+    sb.innerHTML=sdefs.map(function(sd){
+      return '<div class="sb '+(sd.on?"active":"")+'"><div class="sb-lbl">'+sd.lbl+'</div><div class="sb-time">'+sd.t+' GMT</div><div class="sb-status '+(sd.on?"so":"sc")+'">'+(sd.on?"● ACTIVE":"○ CLOSED")+'</div></div>';
+    }).join("");
+  }
+  // Banner
+  var ban=document.getElementById("sess-banner");
+  var bnt=document.getElementById("banner-txt");
+  var bncd=document.getElementById("banner-cd");
+  if(ban&&bnt){
+    if(isWknd()){
+      ban.className="sess-banner sb-off";
+      bnt.textContent="⛔ MARKET CLOSED — Weekend. Study charts. Plan next week. No trades.";
+      if(bncd) bncd.textContent="";
+    } else if(gh>=8&&gh<10){
+      ban.className="sess-banner sb-best";
+      bnt.textContent="⭐ LONDON OPEN — Prime window for GBP/USD, EUR/USD, Gold, NAS100 and US30. Best setups form now.";
+      if(bncd) bncd.textContent=Math.round((10-gh)*60)+"m left in prime window";
+    } else if(gh>=13&&gh<17){
+      ban.className="sess-banner sb-best";
+      bnt.textContent="⭐ NY OVERLAP ACTIVE — Highest volume. Gold, NAS100 & US30 move heavily here. Your prime window.";
+      if(bncd) bncd.textContent=Math.round((17-gh)*60)+"m remaining";
+    } else if(gh>=8&&gh<17){
+      ban.className="sess-banner sb-on";
+      bnt.textContent="● LONDON SESSION — Valid trading window. Look for SMC setups forming on H1.";
+      if(bncd) bncd.textContent=Math.round((17-gh)*60)+"m until London closes";
+    } else if(gh>=0&&gh<8){
+      ban.className="sess-banner sb-off";
+      bnt.textContent="🌏 ASIAN SESSION — Watch where price hunts liquidity. Do not trade. Note highs and lows swept.";
+      if(bncd) bncd.textContent="London opens in "+Math.round((8-gh)*60)+"m";
+    } else {
+      ban.className="sess-banner sb-off";
+      bnt.textContent="⚠ LOW QUALITY SESSION — Outside London/NY. Avoid trading. Rest.";
+      var minsToLdn=gh<8?Math.round((8-gh)*60):Math.round((32-gh)*60);
+      if(bncd) bncd.textContent="London in "+minsToLdn+"m";
+    }
+  }
+  // Session status items
+  var sldn=document.getElementById("s-ldn");
+  if(sldn) sldn.innerHTML=(!isWknd()&&gh>=8&&gh<17)?"<span style='color:var(--green2)'>● ACTIVE NOW</span>":"<span style='color:var(--text3)'>○ Closed</span>";
+  var sny=document.getElementById("s-ny");
+  if(sny) sny.innerHTML=(!isWknd()&&gh>=13&&gh<17)?"<span style='color:var(--gold2)'>⭐ PRIME WINDOW</span>":"<span style='color:var(--text3)'>○ Closed</span>";
+  var sas=document.getElementById("s-asian");
+  if(sas) sas.innerHTML=(!isWknd()&&gh>=0&&gh<8)?"<span style='color:var(--orange)'>● WATCH ONLY</span>":"<span style='color:var(--text3)'>○ Closed</span>";
+  // Active session badge
+  var asb=document.getElementById("active-sess");
+  if(asb){
+    if(isWknd()) asb.textContent="WEEKEND";
+    else if(gh>=13&&gh<17) asb.textContent="NY OVERLAP";
+    else if(gh>=8&&gh<17) asb.textContent="LONDON";
+    else if(gh>=0&&gh<8) asb.textContent="ASIAN";
+    else asb.textContent="OFF-HOURS";
+  }
+  // Timeline
+  var pct=(gh/24*100).toFixed(2);
+  var tln=document.getElementById("tl-now");
+  if(tln) tln.style.left=pct+"%";
+  var tl=document.getElementById("timeline");
+  if(tl){
+    var segs=[
+      {s:0,e:8,col:"rgba(217,119,6,.15)",lbl:"Asian"},
+      {s:8,e:13,col:"rgba(29,184,122,.2)",lbl:"London"},
+      {s:13,e:17,col:"rgba(200,150,42,.25)",lbl:"Overlap"},
+      {s:17,e:22,col:"rgba(26,110,168,.12)",lbl:"NY Late"},
+      {s:22,e:24,col:"rgba(15,32,48,.2)",lbl:"Night"}
+    ];
+    var html="";
+    for(var si=0;si<segs.length;si++){
+      var sg=segs[si];
+      var sw=((sg.e-sg.s)/24*100).toFixed(2);
+      var sl2=(sg.s/24*100).toFixed(2);
+      html+='<div style="position:absolute;left:'+sl2+'%;width:'+sw+'%;top:0;bottom:0;background:'+sg.col+';display:flex;align-items:center;justify-content:center;"><span style="font-family:IBM Plex Mono,monospace;font-size:8px;color:rgba(255,255,255,.25);letter-spacing:1px">'+sg.lbl+'</span></div>';
+    }
+    html+='<div id="tl-now" style="position:absolute;top:0;bottom:0;width:2px;background:var(--gold2);box-shadow:0 0 6px var(--gold2);z-index:2;left:'+pct+'%"></div>';
+    tl.innerHTML=html;
+  }
+  var tlbl=document.getElementById("tl-labels");
+  if(tlbl){
+    var lblhtml="";
+    for(var hh=0;hh<=24;hh+=4){
+      lblhtml+='<span style="position:absolute;left:'+(hh/24*100).toFixed(1)+'%;transform:translateX(-50%);font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--text3)">'+(hh<10?"0":"")+hh+'</span>';
+    }
+    tlbl.innerHTML=lblhtml;
+  }
+  // News warning update
+  updateNewsWarn();
+  // Only rebuild news calendar once per minute so open items stay open
+  var _nowMin = new Date().getMinutes();
+  if(typeof _lastNewsMin === 'undefined' || _lastNewsMin !== _nowMin){
+    _lastNewsMin = _nowMin;
+    updateNewsCalendar();
+  }
+  updateNextNews();
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// ═══════════════════════════════════════════════
+// NEWS WARNING
+// ═══════════════════════════════════════════════
+function updateNewsWarn(){
+  var events=getEvents();
+  var warn=document.getElementById("news-warn");
+  if(!warn) return;
+  var next=null;
+  for(var i=0;i<events.length;i++){
+    if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>-10){next=events[i];break;}
+  }
+  if(!next){warn.style.display="none";return;}
+  warn.style.display="block";
+  var mins=next.mins;
+  var icon=document.getElementById("nw-icon");
+  var title=document.getElementById("nw-title");
+  var txt=document.getElementById("nw-txt");
+  var cd=document.getElementById("nw-cd");
+  if(cd) cd.textContent=mins>0?"In "+mins+"m · Nigeria: "+next.watTime:"HAPPENING NOW";
+  if(mins<=0&&mins>-10){
+    warn.className="news-warn nw-live";
+    if(icon) icon.textContent="🚨";
+    if(title) title.textContent=next.name.toUpperCase()+" — LIVE NOW";
+    if(txt) txt.innerHTML="<strong>"+next.name+"</strong> is releasing RIGHT NOW. Do NOT enter new trades. Spread is wide. Wait 5–10 minutes then look for the post-news 5M candle entry.";
+  } else if(mins<=30){
+    warn.className="news-warn nw-danger";
+    if(icon) icon.textContent="⛔";
+    if(title) title.textContent="STAY OUT — "+next.name.toUpperCase()+" IN "+mins+" MINS";
+    if(txt) txt.innerHTML="<strong style='color:var(--red2)'>"+next.name+"</strong> drops in <strong>"+mins+" minutes</strong> and affects <strong>"+sym+"</strong>. Do not enter new SMC trades. If in profit — close 50%+. Straddle levels are updated in the News Module below.";
+  } else if(mins<=60){
+    warn.className="news-warn nw-caution";
+    if(icon) icon.textContent="⚠️";
+    if(title) title.textContent=next.name.toUpperCase()+" IN "+mins+" MINS — TRADE CAREFULLY";
+    if(txt) txt.innerHTML="<strong>"+next.name+"</strong> is <strong style='color:var(--orange)'>"+mins+" minutes away</strong>. Only enter if TP1 can be reached before <strong>"+next.watTime+" Nigeria time</strong>. Be ready to close early.";
+  } else {
+    warn.className="news-warn nw-safe";
+    if(icon) icon.textContent="✅";
+    if(title) title.textContent="ALL CLEAR — NEXT: "+next.name.toUpperCase();
+    if(txt) txt.innerHTML="Next event for <strong>"+sym+"</strong> is <strong style='color:var(--green2)'>"+next.name+"</strong> in <strong>"+mins+" mins</strong> at <strong>"+next.watTime+" Nigeria time</strong>. Clear to trade SMC setups.";
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NEWS CALENDAR — ACCORDION / COLLAPSIBLE
+// ═══════════════════════════════════════════════
+var expandedNews = null;
+
+var _newsToggleLock = false;
+function toggleNewsItem(id){
+  if(_newsToggleLock) return;
+  _newsToggleLock = true;
+  setTimeout(function(){ _newsToggleLock = false; }, 400);
+  var body = document.getElementById("ncbody-"+id);
+  var item = document.getElementById("ncitem-"+id);
+  if(!body||!item) return;
+  var isOpen = body.classList.contains("open");
+  // Close all first
+  document.querySelectorAll(".nc-body").forEach(function(d){d.classList.remove("open");});
+  document.querySelectorAll(".nc-item").forEach(function(i){i.classList.remove("nc-expanded");});
+  if(!isOpen){
+    body.classList.add("open");
+    item.classList.add("nc-expanded");
+    expandedNews = id;
+  } else {
+    expandedNews = null;
+  }
+}
+
+function updateNewsCalendar(){
+  var events=getEvents();
+  var upcoming=0;
+  for(var i=0;i<events.length;i++) if(events[i].mins>0) upcoming++;
+  var cb=document.getElementById("cal-badge");
+  if(cb){cb.textContent=upcoming>0?upcoming+" UPCOMING":"NONE TODAY";cb.className="badge "+(upcoming>0?"br":"bg");}
+  var pm={"XAUUSD":"XAU","GBPUSD":"GBP","EURUSD":"EUR","NAS100":"NAS","US30":"US30"};
+  var dayN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var html="";
+  var shown=events.slice(0,12);
+  for(var j=0;j<shown.length;j++){
+    var ev=shown[j];
+    var id="nc"+j;
+    var isLive=ev.mins<=0&&ev.mins>-10;
+    var soon=ev.mins>0&&ev.mins<=30;
+    var up2=ev.mins>30&&ev.mins>0;
+    var done=ev.mins<=-10;
+    var aff=ev.pairs.indexOf(sym)>=0;
+    var ps=ev.pairs.map(function(p){return pm[p]||p;}).join(" / ");
+    var lb=aff?"border-left:3px solid "+(ev.imp==="HIGH"?"var(--red2)":"var(--orange)"):"";
+    var ic=(isLive?"nc-item nc-soon":soon?"nc-item nc-soon":up2?"nc-item nc-up":"nc-item");
+    var imc=ev.imp==="HIGH"?"ih":"im";
+    var sc2=isLive?"nc-live-tag":soon?"nc-min nc-soon-tag":up2?"nc-min nc-up-tag":"nc-min nc-done-tag";
+    var st=isLive?"🔴 LIVE":soon?Math.round(ev.mins)+"m":up2?ev.mins+"m":"DONE";
+
+    // Actual vs forecast comparison
+    var actualHtml="";
+    if(ev.actual&&ev.actual!==""){
+      var isPos=parseFloat(ev.actual)>=parseFloat(ev.forecast);
+      actualHtml='<span class="nc-stat-val '+(isPos?"nc-actual-pos":"nc-actual-neg")+'">'+ev.actual+' '+(isPos?"▲":"▼")+'</span>';
+    } else {
+      actualHtml='<span class="nc-stat-val" style="color:var(--text3)">Pending</span>';
+    }
+
+    html+='<div class="'+ic+'" id="ncitem-'+id+'" style="'+lb+'" onclick="toggleNewsItem(\''+id+'\')">';
+    html+='<div class="nc-time">'+dayN[ev.day]+" "+ev.watTime+'</div>';
+    html+='<div class="nc-impact '+imc+'">'+ev.imp+'</div>';
+    html+='<div class="nc-name">'+ev.name+'</div>';
+    html+='<div class="nc-pair">'+ps+'</div>';
+    html+='<div class="nc-badge '+sc2+'">'+st+'</div>';
+    html+='<div class="nc-chevron">▼</div>';
+    html+='</div>';
+
+    // Expandable body — collapsed by default
+    html+='<div class="nc-body" id="ncbody-'+id+'">';
+    html+='<div class="nc-stats-row">';
+    html+='<div class="nc-stat"><div class="nc-stat-lbl">PREVIOUS</div><div class="nc-stat-val" style="color:var(--text)">'+ev.prev+'</div></div>';
+    html+='<div class="nc-stat"><div class="nc-stat-lbl">FORECAST</div><div class="nc-stat-val" style="color:var(--cyan2)">'+ev.forecast+'</div></div>';
+    html+='<div class="nc-stat"><div class="nc-stat-lbl">ACTUAL</div>'+actualHtml+'</div>';
+    html+='</div>';
+    html+='<div class="nc-desc-txt">'+ev.desc+'</div>';
+    html+='<div class="nc-impact-grid" style="margin-bottom:10px">';
+    html+='<div class="nc-impact-box nc-ib-bull"><div class="nc-ib-lbl">▲ IF BEATS FORECAST</div><div class="nc-ib-txt">'+sym+' likely '+(aff&&(sym==="XAUUSD"||sym==="NAS100"||sym==="US30")?"bullish momentum. Look for BUY setup after 1st 5M candle close.":"USD strengthens. Wait for direction. BUY setup on retest.")+'</div></div>';
+    html+='<div class="nc-impact-box nc-ib-bear"><div class="nc-ib-lbl">▼ IF MISSES FORECAST</div><div class="nc-ib-txt">'+sym+' likely '+(aff&&(sym==="XAUUSD"||sym==="NAS100"||sym==="US30")?"bearish pressure. Watch for SELL setup. Wait for fake-out first.":"USD weakens. Watch for SELL opportunity. Let price settle 5M.")+'</div></div>';
+    html+='</div>';
+    // Live AI analysis section
+    html+='<button onclick="runNewsEventAI('+j+',this)" style="width:100%;padding:7px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:3px;color:var(--cyan2);font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;margin-bottom:8px;">⚡ RUN LIVE AI ANALYSIS FOR '+ev.name.toUpperCase()+'</button>';
+    html+='<div id="news-ai-result-'+j+'" style="min-height:0"></div>';
+    html+='</div>';
+  }
+  var nc=document.getElementById("news-cal");
+  if(nc) nc.innerHTML=html||"<div style='font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text3);padding:12px;text-align:center'>No upcoming events</div>";
+}
+
+// ═══════════════════════════════════════════════
+// NEXT NEWS COUNTDOWN
+// ═══════════════════════════════════════════════
+function updateNextNews(){
+  var events=getEvents();
+  var next=null;
+  for(var i=0;i<events.length;i++){
+    if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>0){next=events[i];break;}
+  }
+  var nb=document.getElementById("news-mod-badge");
+  if(!next){
+    if(nb){nb.textContent="NO NEWS TODAY";nb.className="badge bg";}
+    var nt=document.getElementById("next-news-timer");if(nt) nt.textContent="—";
+    return;
+  }
+  if(nb){
+    nb.textContent=next.mins<=30?"⛔ IN "+next.mins+"m":next.mins<=60?"⚠ IN "+next.mins+"m":next.name;
+    nb.className="badge "+(next.mins<=30?"br":next.mins<=60?"bo":"boff");
+  }
+  // Countdown timer
+  var totalSec=next.mins*60;
+  var hh=Math.floor(totalSec/3600),mm2=Math.floor((totalSec%3600)/60),ss2=totalSec%60;
+  var nt2=document.getElementById("next-news-timer");
+  if(nt2) nt2.textContent=(hh<10?"0":"")+hh+":"+(mm2<10?"0":"")+mm2+":"+(ss2<10?"0":"")+ss2;
+  var nn=document.getElementById("next-news-name");if(nn) nn.textContent=next.name+" ("+next.imp+" IMPACT)";
+  var nnt=document.getElementById("next-news-time");if(nnt) nnt.textContent=next.watTime+" Nigeria Time · GMT "+next.h+":"+(next.m<10?"0":"")+next.m;
+}
+
+// ═══════════════════════════════════════════════
+// STRADDLE LEVELS
+// ═══════════════════════════════════════════════
+function updateStraddle(){
+  var events=getEvents();
+  var next=null;
+  for(var i=0;i<events.length;i++){
+    if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>-10){next=events[i];break;}
+  }
+  if(!next) return;
+  var d=MD[sym];
+  var price=d.price;
+  var pip=d.pip;
+  var bs=price+next.off*pip, ss=price-next.off*pip;
+  var sb2=document.getElementById("s-buy");if(sb2) sb2.textContent=fmt(bs);
+  var sbsl=document.getElementById("s-buy-sl");if(sbsl) sbsl.textContent=fmt(bs-next.sl*pip);
+  var sbt1=document.getElementById("s-buy-tp1");if(sbt1) sbt1.textContent=fmt(bs+next.tp1*pip);
+  var sbt2=document.getElementById("s-buy-tp2");if(sbt2) sbt2.textContent=fmt(bs+next.tp2*pip);
+  var ss2=document.getElementById("s-sell");if(ss2) ss2.textContent=fmt(ss);
+  var sssl=document.getElementById("s-sell-sl");if(sssl) sssl.textContent=fmt(ss+next.sl*pip);
+  var sst1=document.getElementById("s-sell-tp1");if(sst1) sst1.textContent=fmt(ss-next.tp1*pip);
+  var sst2=document.getElementById("s-sell-tp2");if(sst2) sst2.textContent=fmt(ss-next.tp2*pip);
+  // Straddle rules
+  var rl=document.getElementById("strad-rules-list");
+  if(rl){
+    var rules=[
+      {icon:"⏰",txt:"Place orders <strong>30 minutes before "+next.watTime+" Nigeria time</strong>. Not earlier — price can drift."},
+      {icon:"🎯",txt:"Offset: <strong>"+next.off+" pips</strong> above and below current price. This avoids the spread trap at news."},
+      {icon:"❌",txt:"When ONE order triggers — <strong>immediately cancel the other.</strong> Do not leave both open."},
+      {icon:"📏",txt:"Stop Loss is <strong>"+next.sl+" pips</strong>. This is wider than normal to handle the news spike wicks."},
+      {icon:"⚠️",txt:"If spread widens above 5 pips before news — <strong>widen your offset to "+Math.round(next.off*1.5)+" pips</strong> to avoid false triggers."},
+      {icon:"🚫",txt:"Do NOT use this strategy during <strong>quiet markets</strong>. Only use for HIGH-impact news events."}
+    ];
+    rl.innerHTML=rules.map(function(r){
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:3px"><span style="font-size:12px;flex-shrink:0">'+r.icon+'</span><span style="font-size:11px;color:var(--text2);line-height:1.5">'+r.txt+'</span></div>';
+    }).join("");
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NEWS TABS
+// ═══════════════════════════════════════════════
+function setNewsTab(n,el){
+  for(var i=0;i<4;i++){
+    var t=document.getElementById("ntab-content-"+i);
+    if(t) t.style.display=i===n?"block":"none";
+  }
+  document.querySelectorAll(".ntab").forEach(function(t){t.classList.remove("active");});
+  if(el) el.classList.add("active");
+}
+
+// ═══════════════════════════════════════════════
+// INSTRUMENT SELECT
+// ═══════════════════════════════════════════════
+function selSym(s,el){
+  sym=s;
+  document.querySelectorAll(".ic").forEach(function(c){c.classList.remove("active");});
+  if(el) el.classList.add("active");
+  if(!chartCandles[s]) buildSymbolChart(s);
+  var ct=document.getElementById("chart-title");
+  if(ct) ct.textContent=s+" — "+(tfLabels[currentTF]||"H1 — SETUP ZONE");
+  resetUI();
+  drawChart();
+  updateStraddle();
+  updateNewsWarn();
+}
+
+function resetUI(){
+  var cl=document.getElementById("checklist");
+  if(cl) cl.innerHTML="<div style='font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text3);padding:12px;text-align:center'>Press Analyse to run SMC checklist</div>";
+  var at=document.getElementById("ai-txt");
+  if(at) at.innerHTML="Press <strong>Analyse Setup</strong> to receive a full Smart Money Concepts breakdown.";
+  var cs=document.getElementById("check-score");
+  if(cs){cs.textContent="0 / 6 CONDITIONS";cs.className="badge boff";}
+  setVerdict("WAIT","WAIT","Run analysis to get your SMC signal");
+  var tb=document.getElementById("trigger-box");
+  if(tb){tb.className="trigger trig-no";}
+  var th=document.getElementById("trig-hd");
+  if(th) th.textContent="⏳ WAITING FOR ENTRY CONDITIONS";
+  var tr=document.getElementById("trig-rows");if(tr) tr.innerHTML="";
+  var le=document.getElementById("l-e1");if(le) le.textContent="—";
+  var ls=document.getElementById("l-sl");if(ls) ls.textContent="—";
+  var lt=document.getElementById("l-tp1");if(lt) lt.textContent="—";
+  var rb=document.getElementById("rr-badge");if(rb) rb.textContent="R:R —";
+  var rd=document.getElementById("rr-box");if(rd) rd.style.display="none";
+  var pm=document.getElementById("pos-mgmt");if(pm) pm.style.display="none";
+  buildZones();
+}
+
+// ═══════════════════════════════════════════════
+// CHART ENGINE — Mockup-grade candlestick + SMC zones
+// ═══════════════════════════════════════════════
+var currentTF = "H1";
+var tfLabels = {
+  D1:"D1 — MACRO BIAS",
+  H4:"H4 — TREND FILTER",
+  H1:"H1 — SETUP ZONE",
+  M15:"M15 — ENTRY TRIGGER",
+  M5:"M5 — CONFIRMATION",
+  M1:"M1 — PRECISION"
+};
+var tfRules = {
+  D1:"📅 D1 = MACRO PICTURE. Identify the major trend. Are we in a bull or bear market? Only trade in this direction on all lower timeframes. Never counter-trend.",
+  H4:"📊 H4 = TREND FILTER. Higher Highs & Higher Lows = Bullish. Find major Order Blocks and liquidity pools. Do NOT enter here — just read direction.",
+  H1:"🎯 H1 = SETUP ZONE. Find the Order Block and Fair Value Gap. Wait for price to pull back into these zones. This is where your setup forms.",
+  M15:"⚡ M15 = ENTRY TRIGGER. Watch for rejection candle (pin bar / engulfing) INSIDE the H1 OB/FVG. That candle IS the signal. Enter on next candle open.",
+  M5:"🔍 M5 = CONFIRMATION. Confirm the M15 signal with consecutive closes in your direction. Never use M5 alone to find direction.",
+  M1:"⚠️ M1 = PRECISION ENTRY only. Fine-tune your entry after M15 is confirmed. Never use M1 to find direction — too much noise."
+};
+
+// Rounded rect helper (from mockup)
+function rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// Per-symbol candle stores — shaped with SMC story baked in
+var chartCandles  = {};
+var chartLiveC    = {};
+var chartLevels   = {};
+
+function buildSymbolChart(s){
+  var d = MD[s];
+  var isIdx = (s==="NAS100"||s==="US30");
+  var base  = d.price;
+  var swing = isIdx ? 120 : (s==="XAUUSD" ? 18 : 0.018);
+  var unit  = isIdx ? 3   : (s==="XAUUSD" ? 0.8 : 0.0008);
+
+  // Generate base 72 candles
+  var out = []; var p = base - swing;
+  for(var i=0;i<72;i++){
+    var o=p, mv=(Math.random()-0.478)*unit*7, c=o+mv;
+    var hi=Math.max(o,c)+Math.random()*unit*4.5;
+    var lo=Math.min(o,c)-Math.random()*unit*4.5;
+    out.push({o:+o.toFixed(d.dec),h:+hi.toFixed(d.dec),l:+lo.toFixed(d.dec),c:+c.toFixed(d.dec)});
+    p=c;
+  }
+
+  // Shape bullish section (BOS push)
+  for(var bi=58;bi<65;bi++){
+    var bo=out[bi].o, bc=+(bo+Math.abs(Math.random()*unit*5+unit)).toFixed(d.dec);
+    out[bi]={o:bo,c:bc,h:+(bc+Math.random()*unit*2.5).toFixed(d.dec),l:+(bo-Math.random()*unit*2).toFixed(d.dec)};
+  }
+  // Dip to OB
+  for(var di=65;di<69;di++){
+    var do2=out[di-1].c, dc=+(do2-Math.abs(Math.random()*unit*5+unit*2)).toFixed(d.dec);
+    out[di]={o:do2,c:dc,h:+(do2+Math.random()*unit*1.5).toFixed(d.dec),l:+(dc-Math.random()*unit*3).toFixed(d.dec)};
+  }
+
+  // Calculate OB from dip
+  var obLo = Math.min(out[65].l, out[66].l, out[67].l, out[68].l);
+  var obHi = obLo + swing*0.35;
+
+  // Rally from OB
+  var rb = +(obLo+unit*0.5).toFixed(d.dec);
+  out[69]={o:rb,c:+(rb+unit*8).toFixed(d.dec),h:+(rb+unit*10).toFixed(d.dec),l:+(rb-unit).toFixed(d.dec)};
+  out[70]={o:out[69].c,c:+(out[69].c+unit*5).toFixed(d.dec),h:+(out[69].c+unit*7).toFixed(d.dec),l:+(out[69].c-unit).toFixed(d.dec)};
+  out[71]={o:out[70].c,c:+(out[70].c+unit*3).toFixed(d.dec),h:+(out[70].c+unit*5).toFixed(d.dec),l:+(out[70].c-unit*0.5).toFixed(d.dec)};
+
+  var entry = +(obHi - unit).toFixed(d.dec);
+  var sl    = +(obLo - unit*2).toFixed(d.dec);
+  var slPips = Math.round(Math.abs(entry-sl)/d.pip);
+  var tp1   = +(entry + slPips*2.5*d.pip).toFixed(d.dec);
+  var tp2   = +(entry + slPips*4.5*d.pip).toFixed(d.dec);
+
+  // Live candle starts from last close
+  var lp = out[71].c;
+  chartCandles[s] = out;
+  chartLiveC[s]   = {o:+(lp-unit*2).toFixed(d.dec),c:lp,h:+(lp+unit).toFixed(d.dec),l:+(lp-unit*3).toFixed(d.dec)};
+  chartLevels[s]  = {entry:entry,sl:sl,tp1:tp1,tp2:tp2,obHi:obHi,obLo:obLo,slPips:slPips};
+}
+
+// Build on init
+(function(){ for(var k in MD) buildSymbolChart(k); })();
+
+function setChartTF(tf, el){
+  currentTF = tf;
+  document.querySelectorAll(".tf-tab-btn").forEach(function(b){b.classList.remove("active");});
+  if(el) el.classList.add("active");
+  var ct = document.getElementById("chart-title");
+  if(ct) ct.textContent = sym + " — " + (tfLabels[tf] || tf);
+  var rb = document.getElementById("tf-rule-bar");
+  if(rb) rb.textContent = tfRules[tf] || "";
+  drawChart();
+}
+
+function drawChart(){
+  var canvas = document.getElementById("sc");
+  if(!canvas) return;
+  var ctx = canvas.getContext("2d");
+  var wrap = canvas.parentElement;
+  var W = wrap ? wrap.offsetWidth : 600;
+  var H = wrap ? wrap.offsetHeight : 260;
+  if(W<=0||H<=0){ W=600; H=260; }
+  canvas.width  = W;
+  canvas.height = H;
+
+  var d    = MD[sym];
+  var cands = chartCandles[sym];
+  var live  = chartLiveC[sym];
+  var lvls  = chartLevels[sym];
+  if(!cands||!live||!lvls) return;
+
+  // Only show Entry/SL/TP lines if analysis has been run for this symbol
+  var showLevels = (lastAnalysis && lastAnalysis.sym === sym);
+
+  var all = cands.concat([live]);
+  var PL=10, PR=90, PT=20, PB=28;
+  var CW=W-PL-PR, CH=H-PT-PB;
+
+  // Price range — only include trade levels if analysis was run
+  var prices = [];
+  for(var pi=0;pi<all.length;pi++){prices.push(all[pi].h,all[pi].l);}
+  if(showLevels){ prices.push(lvls.sl-d.pip*4, lvls.tp2+d.pip*4); }
+  var minP = Math.min.apply(null,prices);
+  var maxP = Math.max.apply(null,prices);
+  var pRange = maxP - minP || 1;
+  function toY(p){return PT + CH - ((p-minP)/pRange)*CH;}
+
+  // Background
+  ctx.fillStyle="#020508"; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  for(var gi=0;gi<=6;gi++){
+    var gy = PT+(CH/6)*gi;
+    ctx.strokeStyle="rgba(15,32,48,0.9)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PL,gy); ctx.lineTo(W-PR,gy); ctx.stroke();
+    var gp = maxP-(pRange/6)*gi;
+    ctx.fillStyle="#3a5570"; ctx.font="9px monospace"; ctx.textAlign="left";
+    ctx.fillText(fmt_val(gp,d.dec), W-PR+5, gy+3);
+  }
+  var vs = Math.max(1,Math.floor(all.length/8));
+  for(var vi=0;vi<all.length;vi+=vs){
+    var vx = PL+(vi/(all.length-1))*CW;
+    ctx.strokeStyle="rgba(15,32,48,0.9)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(vx,PT); ctx.lineTo(vx,PT+CH); ctx.stroke();
+    var vlbl = vi===all.length-1?"NOW":(-all.length+vi+1)+"h";
+    ctx.fillStyle="#3a5570"; ctx.font="9px monospace"; ctx.textAlign="center";
+    ctx.fillText(vlbl, vx, PT+CH+18);
+  }
+
+  // OB zone
+  var oby1=toY(lvls.obHi), oby2=toY(lvls.obLo);
+  ctx.fillStyle="rgba(212,160,23,0.08)"; ctx.fillRect(PL,oby1,CW,oby2-oby1);
+  ctx.strokeStyle="rgba(212,160,23,0.45)"; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PL,oby1); ctx.lineTo(W-PR,oby1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PL,oby2); ctx.lineTo(W-PR,oby2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="rgba(212,160,23,0.85)"; ctx.font="bold 9px monospace"; ctx.textAlign="left";
+  ctx.fillText("ORDER BLOCK", PL+4, oby1-3);
+
+  // FVG
+  if(all.length>70){
+    var ft=toY(cands[70].h), fb=toY(cands[69].l);
+    var fx=PL+(69/(all.length-1))*CW;
+    ctx.fillStyle="rgba(6,182,212,0.07)";
+    ctx.fillRect(fx,ft,(4/(all.length-1))*CW,fb-ft);
+    ctx.fillStyle="rgba(6,182,212,0.7)"; ctx.font="bold 9px monospace"; ctx.textAlign="left";
+    ctx.fillText("FVG", fx+2, ft-3);
+  }
+
+  // BOS line
+  if(all.length>65){
+    var bosY=toY(cands[64].h);
+    ctx.strokeStyle="rgba(74,158,255,0.65)"; ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(PL+(64/(all.length-1))*CW,bosY); ctx.lineTo(W-PR,bosY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="rgba(74,158,255,0.85)"; ctx.font="bold 9px monospace"; ctx.textAlign="right";
+    ctx.fillText("BOS", W-PR-3, bosY-3);
+  }
+
+  // Liquidity levels (Asian highs/lows)
+  var liqH = maxP - pRange*0.05;
+  var liqL = minP + pRange*0.05;
+  ctx.strokeStyle="rgba(200,150,42,0.3)"; ctx.setLineDash([4,5]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PL,toY(liqH)); ctx.lineTo(W-PR,toY(liqH)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PL,toY(liqL)); ctx.lineTo(W-PR,toY(liqL)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="rgba(200,150,42,0.6)"; ctx.font="bold 8px monospace"; ctx.textAlign="left";
+  ctx.fillText("LIQ HIGH", PL+4, toY(liqH)-3);
+  ctx.fillText("LIQ LOW",  PL+4, toY(liqL)+11);
+
+  // Liq swept label
+  if(all.length>69){
+    var lsx=PL+(68/(all.length-1))*CW;
+    var lsy=toY(cands[67].l)+14;
+    ctx.fillStyle="rgba(212,160,23,0.9)"; ctx.font="bold 9px monospace"; ctx.textAlign="center";
+    ctx.fillText("LIQ SWEPT", lsx, lsy);
+  }
+
+  // Level lines (from mockup pattern)
+  function lvlLine(price, color, label, dash, lw){
+    var ly = toY(price);
+    if(ly<PT||ly>PT+CH) return;
+    ctx.strokeStyle=color; ctx.setLineDash(dash||[]); ctx.lineWidth=lw||1.5;
+    ctx.beginPath(); ctx.moveTo(PL,ly); ctx.lineTo(W-PR,ly); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font="bold 9px monospace";
+    var tw = ctx.measureText(label).width+8;
+    ctx.fillStyle=color; ctx.globalAlpha=0.92;
+    rrect(ctx,W-PR+2,ly-8,tw,15,3); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle="#000"; ctx.textAlign="left";
+    ctx.fillText(label, W-PR+6, ly+3);
+  }
+  // Only draw Entry/SL/TP lines if analysis has been run AND signal is BUY or SELL
+  if(showLevels && lastAnalysis && lastAnalysis.dir !== "WAIT"){
+    lvlLine(lvls.tp2,  "#a96eff", "TP2 "+fmt_val(lvls.tp2,d.dec),  [6,4]);
+    lvlLine(lvls.tp1,  "#26a69a", "TP1 "+fmt_val(lvls.tp1,d.dec),  [6,4]);
+    lvlLine(lvls.entry,"#4a9eff", "ENT "+fmt_val(lvls.entry,d.dec), [],    2);
+    lvlLine(lvls.sl,   "#ef5350", "SL  "+fmt_val(lvls.sl,d.dec),   [6,4]);
+  } else {
+    ctx.fillStyle="rgba(8,145,178,0.3)"; ctx.font="bold 10px IBM Plex Mono,monospace"; ctx.textAlign="center";
+    ctx.fillText("▶  Press  ANALYSE  to  reveal  trade  levels", W/2, H-10);
+    ctx.textAlign="left";
+  }
+
+  // Current price dashed
+  var cp = live.c;
+  ctx.strokeStyle="rgba(240,192,64,0.45)"; ctx.setLineDash([2,3]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PL,toY(cp)); ctx.lineTo(W-PR,toY(cp)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // TF watermark
+  ctx.fillStyle="rgba(255,255,255,0.025)"; ctx.font="bold 52px Syne,sans-serif"; ctx.textAlign="center";
+  ctx.fillText(currentTF, W/2, H/2+18);
+  ctx.textAlign="left";
+
+  // Draw candles (mockup technique)
+  var cw = Math.max(2,(CW/all.length)*0.72);
+  for(var ci=0;ci<all.length;ci++){
+    var cc=all[ci];
+    var cx=PL+(ci/(all.length-1))*CW;
+    var up=cc.c>=cc.o;
+    var col=up?"#26a69a":"#ef5350";
+    ctx.strokeStyle=up?"#1a8a80":"#c44040"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx,toY(cc.h)); ctx.lineTo(cx,toY(cc.l)); ctx.stroke();
+    var bt=toY(Math.max(cc.o,cc.c)), bb=toY(Math.min(cc.o,cc.c));
+    var bh=Math.max(1.5,bb-bt);
+    ctx.fillStyle=col; ctx.fillRect(cx-cw/2,bt,cw,bh);
+    if(ci===all.length-1){
+      ctx.strokeStyle="rgba(240,192,64,0.55)"; ctx.lineWidth=1;
+      ctx.strokeRect(cx-cw/2-1,bt-1,cw+2,bh+2);
+    }
+  }
+
+  // Update chart bias badge
+  var halfLen = Math.floor(all.length/2);
+  var h2_=Math.max.apply(null,all.slice(halfLen).map(function(c){return c.h;}));
+  var h1_=Math.max.apply(null,all.slice(0,halfLen).map(function(c){return c.h;}));
+  var l2_=Math.min.apply(null,all.slice(halfLen).map(function(c){return c.l;}));
+  var l1_=Math.min.apply(null,all.slice(0,halfLen).map(function(c){return c.l;}));
+  var bias=h2_>h1_&&l2_>l1_?"BULLISH":h2_<h1_&&l2_<l1_?"BEARISH":"RANGING";
+  var cb=document.getElementById("chart-bias");
+  if(cb){cb.textContent="BIAS: "+bias; cb.className="badge "+(bias==="BULLISH"?"bg":bias==="BEARISH"?"br":"boff");}
+}
+
+// Tick — update live candle for active symbol
+setInterval(function(){
+  var d=MD[sym];
+  var live=chartLiveC[sym];
+  if(!live) return;
+  live.c = d.price;
+  live.h = Math.max(live.h, d.price);
+  live.l = Math.min(live.l, d.price);
+  drawChart();
+}, 1400);
+
+// Resize handler
+window.addEventListener("resize", function(){ drawChart(); });
+drawChart();
+
+// ═══════════════════════════════════════════════
+// ZONES
+// ═══════════════════════════════════════════════
+function buildZones(){
+  var d=MD[sym];
+  var price=d.price;
+  var r=d.high-d.low;
+  var isIndex=(sym==="NAS100"||sym==="US30");
+  var liqBuf=sym==="XAUUSD"?1.5:isIndex?10:0.0015;
+  var zones=[
+    {cls:"zi-ob-bull",type:"BULL OB",  lo:d.low+r*.15,hi:d.low+r*.25,note:"Demand zone"},
+    {cls:"zi-ob-bear",type:"BEAR OB",  lo:d.low+r*.75,hi:d.low+r*.85,note:"Supply zone"},
+    {cls:"zi-fvg",    type:"FVG BULL", lo:d.low+r*.35,hi:d.low+r*.40,note:"Imbalance fill"},
+    {cls:"zi-liq",    type:"LIQ HIGH", lo:d.high,     hi:d.high+liqBuf,note:"Stop target"},
+    {cls:"zi-liq",    type:"LIQ LOW",  lo:d.low-liqBuf,hi:d.low,note:"Stop target"}
+  ].sort(function(a,b){return b.lo-a.lo;});
+  var zb=document.getElementById("zones-badge");
+  if(zb) zb.textContent=zones.length+" zones";
+  var html="";
+  for(var i=0;i<zones.length;i++){
+    var z=zones[i];
+    var dist=Math.min(Math.abs(price-z.lo),Math.abs(price-z.hi));
+    var pips=Math.round(dist/d.pip);
+    var near=isIndex?(pips<50):(pips<50);
+    html+='<div class="zone-item '+z.cls+'"><div class="z-type">'+z.type+"</div><div class='z-range'>"+fmt(z.lo)+" – "+fmt(z.hi)+"</div><div class='z-dist "+(near?"z-near":"")+"'>"+pips+"p</div></div>";
+  }
+  var zl=document.getElementById("zones-list");
+  if(zl) zl.innerHTML=html;
+}
+buildZones();
+
+// ═══════════════════════════════════════════════
+// INDICATORS
+// ═══════════════════════════════════════════════
+function calcRSI(data,p){p=p||14;var ch=[];for(var i=1;i<data.length;i++)ch.push(data[i]-data[i-1]);var sl=ch.slice(-p*2);var g=0,l=0;for(var j=0;j<sl.length;j++){if(sl[j]>0)g+=sl[j];else l+=Math.abs(sl[j]);}g/=p;l/=p;if(l===0)return 100;return 100-100/(1+g/l);}
+function calcATR(data,p){p=p||14;var tr=[];for(var i=1;i<data.length;i++)tr.push(Math.abs(data[i]-data[i-1]));var sl=tr.slice(-p);var s=0;for(var j=0;j<sl.length;j++)s+=sl[j];return s/p;}
+function calcMACD(data){var ema=function(d,p){var k=2/(p+1),e=d.slice(0,p).reduce(function(a,b){return a+b;},0)/p,r=[e];for(var i=p;i<d.length;i++){e=d[i]*k+e*(1-k);r.push(e);}return r;};var e12=ema(data,12),e26=ema(data,26),ml=[],ln=Math.min(e12.length,e26.length);for(var i=0;i<ln;i++)ml.push(e12[e12.length-ln+i]-e26[e26.length-ln+i]);var sig=ema(ml,9);return{macd:ml[ml.length-1],hist:ml[ml.length-1]-sig[sig.length-1]};}
+
+// ═══════════════════════════════════════════════
+// SMC ENGINE
+// ═══════════════════════════════════════════════
+function calcSMC(){
+  var d=MD[sym];
+  var data=priceData[sym];
+  var price=d.price;
+  var pip=d.pip;
+  var isIdx=(sym==="NAS100"||sym==="US30");
+  var ls=data.slice(-60),m=Math.floor(ls.length/2);
+  var h2=Math.max.apply(null,ls.slice(m)),h1=Math.max.apply(null,ls.slice(0,m));
+  var l2=Math.min.apply(null,ls.slice(m)),l1=Math.min.apply(null,ls.slice(0,m));
+  var h4Bull=h2>h1&&l2>l1,h4Bear=h2<h1&&l2<l1;
+  var bias=h4Bull?"BULLISH":h4Bear?"BEARISH":"RANGING";
+  // BOS/CHoCH
+  var rH=Math.max.apply(null,data.slice(-20)),rL=Math.min.apply(null,data.slice(-20));
+  var pH=Math.max.apply(null,data.slice(-40,-20)),pL=Math.min.apply(null,data.slice(-40,-20));
+  var bos=h4Bull?(rH>pH):(h4Bear?(rL<pL):false);
+  var choch=h4Bull?(rL<pL):(h4Bear?(rH>pH):false);
+  // OB
+  var sl2=data.slice(-25),obH,obL,obBull;
+  for(var i=sl2.length-5;i>2;i--){
+    if(h4Bull&&sl2[i]>sl2[i-1]){var pre=sl2[i-2];if(pre<sl2[i-1]){obL=Math.min(pre,sl2[i-1]);obH=Math.max(pre,sl2[i-1]);obBull=true;break;}}
+    if(h4Bear&&sl2[i]<sl2[i-1]){var pre=sl2[i-2];if(pre>sl2[i-1]){obL=Math.min(pre,sl2[i-1]);obH=Math.max(pre,sl2[i-1]);obBull=false;break;}}
+  }
+  if(!obH){
+    var obFallback=sym==="XAUUSD"?3:isIdx?30:0.003;
+    obH=d.high-obFallback;obL=obH-(sym==="XAUUSD"?2:isIdx?20:0.002);obBull=h4Bull;
+  }
+  var inOB=price>=obL&&price<=obH;
+  // FVG
+  var fvgR=sym==="XAUUSD"?1.5:isIdx?15:0.0015;
+  var fvgH=price+(h4Bull?-fvgR*.5:fvgR),fvgL=fvgH-fvgR;
+  var inFVG=price>=fvgL&&price<=fvgH;
+  // Liquidity
+  var liqBuf=sym==="XAUUSD"?.5:isIdx?5:.0005;
+  var liqThresh=sym==="XAUUSD"?2:isIdx?20:.002;
+  var asH=d.high+liqBuf,asL=d.low-liqBuf;
+  var liqSwept=h4Bull?(price<asL+liqThresh):(price>asH-liqThresh);
+  // Session — Indices active during London open + full NY session
+  var gh=ghf();
+  var isIndex2=(sym==="NAS100"||sym==="US30");
+  var inSess=!isWknd()&&(isIndex2?((gh>=8&&gh<17)||(gh>=13&&gh<22)):((gh>=8&&gh<17)||(gh>=13&&gh<17)));
+  var bestSess=!isWknd()&&(isIndex2?((gh>=8&&gh<10)||(gh>=13&&gh<17)):((gh>=8&&gh<10)||(gh>=13&&gh<15)));
+  // RSI
+  var rsi=calcRSI(data);
+  var rsiOk=h4Bull?(rsi>50&&rsi<70):(rsi<50&&rsi>30);
+  // Checks
+  var checks=[
+    {lbl:"H4 Market Structure",pass:bias!=="RANGING",
+     detail:bias==="RANGING"?"<strong>No clear trend on H4.</strong> Price is ranging. Smart money rule: do not trade a ranging market. Wait for a clear BOS to set direction.":"<strong>"+bias+" bias</strong> confirmed on H4. Price making "+(h4Bull?"Higher Highs / Higher Lows":"Lower Highs / Lower Lows")+". Only take "+(h4Bull?"BUY":"SELL")+" setups.",
+     tag:bias},
+    {lbl:"BOS / CHoCH Present",pass:bos||choch,
+     detail:bos?"<strong>Break of Structure confirmed.</strong> Price broke the previous "+(h4Bull?"swing high":"swing low")+" — smart money is active, trend continuation likely.":choch?"<strong>Change of Character detected.</strong> Possible reversal forming. Wait for H1 confirmation.":"<strong>No BOS or CHoCH yet.</strong> Structure has not broken. Do not enter — wait for the break.",
+     tag:bos?"BOS":choch?"CHoCH":"NONE"},
+    {lbl:"Price at Order Block",pass:inOB,
+     detail:inOB?"<strong>Price is inside the "+(obBull?"Bullish":"Bearish")+" Order Block</strong> ("+fmt(obL)+"–"+fmt(obH)+"). Institutional order zone. Highest probability reaction point.":"<strong>Price is not at the Order Block.</strong> OB zone: "+fmt(obL)+"–"+fmt(obH)+". Wait for price to pull back into this zone before looking for entry.",
+     tag:inOB?"IN ZONE":"WAITING"},
+    {lbl:"Fair Value Gap Present",pass:inFVG||inOB,
+     detail:inFVG?"<strong>Price is inside a Fair Value Gap</strong> ("+fmt(fvgL)+"–"+fmt(fvgH)+"). Market moved fast and left an imbalance. Smart money will return to fill it — high-probability zone.":"<strong>No active FVG at price.</strong> Best entries are when OB and FVG overlap. Currently not aligned. Wait for price to retrace.",
+     tag:inFVG?"IN FVG":inOB?"OB ACTIVE":"WAITING"},
+    {lbl:"Liquidity Swept",pass:liqSwept,
+     detail:liqSwept?"<strong>Liquidity hunt confirmed.</strong> Price swept below "+(h4Bull?"Asian lows":"Asian highs")+", grabbing retail stop losses. Smart money collected orders. Real move should start now.":"<strong>Liquidity not yet swept.</strong> Stops still sitting at "+(h4Bull?fmt(asL):fmt(asH))+". Smart money may drive price there first. Wait for the sweep before entering.",
+     tag:liqSwept?"SWEPT":"PENDING"},
+    {lbl:"Trading Session Active",pass:inSess,
+     detail:inSess?bestSess?"<strong>Prime session active.</strong> London Open or NY Overlap — institutional volume at peak. If all conditions are green, you are cleared to execute.":"<strong>Valid session active.</strong> London or NY — proceed if all other conditions are met.":isWknd()?"<strong>Market closed</strong> (Weekend). No trades. Plan your week.":"<strong>Outside trading hours.</strong> Currently "+gh.toFixed(1)+" GMT. Set alarm for London Open — 09:00 Nigeria time.",
+     tag:bestSess?"PRIME":inSess?"VALID":"CLOSED"}
+  ];
+  var passCount=0;
+  for(var i=0;i<checks.length;i++) if(checks[i].pass) passCount++;
+  var direction="WAIT";
+  if(passCount>=5&&h4Bull) direction="BUY";
+  else if(passCount>=5&&h4Bear) direction="SELL";
+  else if(bias==="RANGING") direction="RANGING";
+  var atr=calcATR(data);
+  var entry,sl,tp1;
+  if(direction==="BUY"){
+    entry=Math.min(obH,price+(sym==="XAUUSD"?.3:isIdx?.3:0.0003));
+    sl=obL-atr*.5;
+    tp1=entry+(Math.abs(entry-sl)*2.5);
+  } else if(direction==="SELL"){
+    entry=Math.max(obL,price-(sym==="XAUUSD"?.3:isIdx?.3:0.0003));
+    sl=obH+atr*.5;
+    tp1=entry-(Math.abs(sl-entry)*2.5);
+  }
+  return{checks:checks,passCount:passCount,direction:direction,bias:bias,bos:bos,choch:choch,obH:obH,obL:obL,obBull:obBull,liqSwept:liqSwept,inSess:inSess,bestSess:bestSess,entry:entry,sl:sl,tp1:tp1,atr:atr,rsi:rsi};
+}
+
+// ═══════════════════════════════════════════════
+// BUILD UI FROM RESULT
+// ═══════════════════════════════════════════════
+function setVerdict(cls,txt,sub){
+  var v=document.getElementById("verdict");
+  if(v) v.className="verdict "+cls;
+  var vd=document.getElementById("v-dir");if(vd) vd.textContent=txt;
+  var vs=document.getElementById("v-sub");if(vs) vs.innerHTML=sub;
+}
+
+function buildChecklist(r){
+  var html="";
+  for(var i=0;i<r.checks.length;i++){
+    var c=r.checks[i];
+    html+='<div class="ci '+(c.pass?"pass":"fail")+'"><div class="ci-icon">'+(c.pass?"✓":"✗")+'</div><div class="ci-body"><div class="ci-lbl">'+c.lbl+'</div><div class="ci-detail">'+c.detail+'</div></div><div class="ci-tag">'+c.tag+'</div></div>';
+  }
+  var cl=document.getElementById("checklist");
+  if(cl) cl.innerHTML=html;
+  var sc=document.getElementById("check-score");
+  if(sc){sc.textContent=r.passCount+" / 6 CONDITIONS";sc.className="badge "+(r.passCount===6?"bg":r.passCount>=4?"bo":"br");}
+}
+
+function buildTrigger(r){
+  var tb=document.getElementById("trigger-box");
+  var th=document.getElementById("trig-hd");
+  var tr=document.getElementById("trig-rows");
+  if(!tb||!th||!tr) return;
+  var isBuy=r.direction==="BUY";
+  if(r.direction==="BUY"||r.direction==="SELL"){
+    tb.className="trigger trig-go";
+    th.textContent="✅ ENTRY CONDITIONS MET — "+r.direction+" SETUP CONFIRMED";
+    tr.innerHTML='<div class="tr"><div class="tr-icon">'+(isBuy?"📈":"📉")+'</div><div class="tr-txt"><strong>H4 Bias: '+r.bias+'</strong> — only take '+r.direction+' trades today. Do not counter-trade.</div><div class="tr-tag t-met">CONFIRMED</div></div>'+
+      '<div class="tr"><div class="tr-icon">🧱</div><div class="tr-txt">Price is at the <strong>'+(isBuy?"Bullish":"Bearish")+' Order Block</strong> ('+fmt(r.obL)+'–'+fmt(r.obH)+'). This is your entry zone.</div><div class="tr-tag t-met">AT ZONE</div></div>'+
+      '<div class="tr"><div class="tr-icon">🕯️</div><div class="tr-txt">Drop to <strong>M15</strong>. Wait for a <strong>rejection candle</strong> — pin bar or engulfing close '+(isBuy?"upward":"downward")+'. That candle IS your trigger. Enter on next candle open.</div><div class="tr-tag t-wait">WATCH M15</div></div>'+
+      '<div class="tr"><div class="tr-icon">🎯</div><div class="tr-txt"><strong>Entry:</strong> '+fmt(r.entry)+'  <strong>SL:</strong> '+fmt(r.sl)+'  <strong>TP1:</strong> '+fmt(r.tp1)+'</div><div class="tr-tag t-met">LEVELS SET</div></div>';
+  } else {
+    tb.className="trigger trig-no";
+    th.textContent="⏳ CONDITIONS NOT MET — DO NOT ENTER";
+    tr.innerHTML='<div class="tr"><div class="tr-icon">📋</div><div class="tr-txt">Need at least <strong>5 of 6</strong> SMC conditions. Currently <strong>'+r.passCount+'/6</strong>. Smart money rule: no full setup = no trade.</div><div class="tr-tag t-warn">WAIT</div></div>'+
+      '<div class="tr"><div class="tr-icon">⏰</div><div class="tr-txt">Best setups form at <strong>London Open (09:00 Nigeria)</strong> and <strong>NY Overlap (14:00 Nigeria)</strong>. Set your alarm and check then.</div><div class="tr-tag t-wait">PATIENCE</div></div>';
+  }
+}
+
+
+// ═══════════════════════════════════════════════
+// 10% FIXED FRACTIONAL POSITION SIZE CALCULATOR
+// Formula: Risk = Balance × 10%
+//          Lots = Risk ÷ (SL pips × pip value per 0.01 lot)
+// Gold:    0.01 lot = $0.10/pip
+// GBPUSD:  0.01 lot = $0.10/pip
+// EURUSD:  0.01 lot = $0.10/pip
+// ═══════════════════════════════════════════════
+function calcPositionSize() {
+  var bal = parseFloat(document.getElementById('acc-bal').value) || 0;
+  var d   = MD[sym];
+  if (!d || bal <= 0) return;
+
+  // Get current SL pips from the live setup
+  var r = calcSMC();
+  var slPips = 0;
+  if (r && r.entry && r.sl) {
+    slPips = Math.round(Math.abs(r.entry - r.sl) / d.pip);
+  }
+  if (slPips <= 0) slPips = 30;
+
+  var riskAmt = bal * 0.10;
+  var pipValuePer001 = 0.10;
+  var rawLots = riskAmt / (slPips * pipValuePer001);
+  var lots = Math.floor(rawLots * 100) / 100;
+  if (lots < 0.01) lots = 0.01;
+
+  var tp1Pips = Math.round(slPips * 2.5);
+  var profitTP1 = (lots * 100) * pipValuePer001 * tp1Pips * 0.5;
+
+  var elRisk   = document.getElementById('ps-risk');
+  var elLots   = document.getElementById('ps-lots');
+  var elProfit = document.getElementById('ps-profit');
+  var elNote   = document.getElementById('ps-note');
+
+  if (elRisk)   elRisk.textContent   = '$' + riskAmt.toFixed(2);
+  if (elLots)   elLots.textContent   = lots.toFixed(2) + ' lots';
+  if (elProfit) elProfit.textContent = '$' + profitTP1.toFixed(2);
+  if (elNote)   elNote.innerHTML     =
+    '<strong style="color:var(--white)">$' + bal.toFixed(0) + '</strong> account &nbsp;|&nbsp; ' +
+    'SL: <strong style="color:var(--white)">' + slPips + 'p</strong> &nbsp;|&nbsp; ' +
+    'Risk: <strong style="color:var(--red2)">$' + riskAmt.toFixed(2) + '</strong> &nbsp;|&nbsp; ' +
+    'Lots: <strong style="color:var(--green2)">' + lots.toFixed(2) + '</strong> &nbsp;|&nbsp; ' +
+    'TP1 profit (50%): <strong style="color:var(--gold2)">$' + profitTP1.toFixed(2) + '</strong>';
+}
+
+function buildLevels(r){
+  if(!r.entry) return;
+  var d=MD[sym];
+  var pip=d.pip;
+  var isBuy=r.direction==="BUY";
+  var slPips=Math.round(Math.abs(r.entry-r.sl)/pip);
+  var tp1Pips=Math.round(Math.abs(r.tp1-r.entry)/pip);
+  var rr1=(tp1Pips/slPips).toFixed(1);
+  var moveSize=Math.abs(r.tp1-r.entry);
+  var e2=isBuy?r.entry+moveSize*.35:r.entry-moveSize*.35;
+  var tp2=isBuy?r.tp1+moveSize*1.2:r.tp1-moveSize*1.2;
+  var tp2Pips=Math.round(Math.abs(tp2-e2)/pip);
+  var sl2Pips=Math.round(Math.abs(e2-r.sl)/pip);
+  var rr2=(tp2Pips/sl2Pips).toFixed(1);
+  // Entry 1
+  var le=document.getElementById("l-e1");if(le) le.textContent=fmt(r.entry);
+  var len=document.getElementById("l-e1n");if(len) len.textContent=slPips+"p SL risk";
+  var ls=document.getElementById("l-sl");if(ls) ls.textContent=fmt(r.sl);
+  var lsn=document.getElementById("l-sln");if(lsn) lsn.textContent=slPips+"p — "+(isBuy?"below":"above")+" OB";
+  var lt=document.getElementById("l-tp1");if(lt) lt.textContent=fmt(r.tp1);
+  var ltn=document.getElementById("l-tp1n");if(ltn) ltn.textContent=tp1Pips+"p reward";
+  // Entry 2
+  var le2=document.getElementById("l-e2");if(le2) le2.textContent=fmt(e2);
+  var ls2=document.getElementById("l-sl2");if(ls2) ls2.textContent=fmt(r.sl);
+  var lt2=document.getElementById("l-tp2");if(lt2) lt2.textContent=fmt(tp2);
+  var lt2n=document.getElementById("l-tp2n");if(lt2n) lt2n.textContent=tp2Pips+"p full run";
+  var e2x=document.getElementById("e2-explain");
+  if(e2x) e2x.innerHTML="After hitting <strong style='color:var(--green2)'>TP1</strong>, move SL to break-even. If price pulls back to <strong style='color:var(--white)'>"+fmt(e2)+"</strong> (FVG zone) — that is your second entry. Same SL ("+fmt(r.sl)+"), target <strong style='color:var(--gold2)'>TP2 at "+fmt(tp2)+"</strong>. Only enter if structure has not broken.";
+  // RR box
+  var rb=document.getElementById("rr-badge");if(rb){rb.textContent="Best R:R 1:"+rr2;rb.className="badge "+(+rr2>=3?"bg":+rr2>=2?"bo":"br");}
+  var rd=document.getElementById("rr-box");if(rd) rd.style.display="block";
+  var rr=document.getElementById("rr-risk");if(rr) rr.textContent=slPips;
+  var rt1=document.getElementById("rr-tp1p");if(rt1) rt1.textContent=tp1Pips;
+  var rt2=document.getElementById("rr-tp2p");if(rt2) rt2.textContent=tp2Pips;
+  var rr1e=document.getElementById("rr-r1");if(rr1e) rr1e.textContent="1:"+rr1;
+  var rr2e=document.getElementById("rr-r2");if(rr2e) rr2e.textContent="1:"+rr2;
+  var rexp=document.getElementById("rr-exp");
+  if(rexp) rexp.innerHTML="Entry 1: Risk <strong style='color:var(--red2)'>"+slPips+"p</strong> → Reward <strong style='color:var(--green2)'>"+tp1Pips+"p</strong> (1:"+rr1+") — close 50% here.<br>Entry 2: Risk <strong style='color:var(--red2)'>"+sl2Pips+"p</strong> → Reward <strong style='color:var(--gold2)'>"+tp2Pips+"p</strong> (1:"+rr2+") — full liquidity run.";
+  // Auto-update position size calculator when setup loads
+  calcPositionSize();
+  // Position rules
+  var pm=document.getElementById("pos-mgmt");if(pm) pm.style.display="block";
+  var pr=document.getElementById("pos-rules");
+  if(pr) pr.innerHTML=[
+    {i:"🎯",t:"TP1 hit ("+fmt(r.tp1)+") → <strong>Close 50%</strong> of position immediately. Bank the profit."},
+    {i:"🔒",t:"Move Stop Loss to <strong>break-even ("+fmt(r.entry)+")</strong> right after TP1. You now cannot lose."},
+    {i:"⏳",t:"Watch for FVG pullback to <strong>"+fmt(e2)+"</strong>. If price holds there — add Entry 2 position."},
+    {i:"🚀",t:"Let remainder + Entry 2 run to <strong>TP2 ("+fmt(tp2)+")</strong>. Full liquidity run."},
+    {i:"🚨",t:"If price closes "+(isBuy?"below <strong>"+fmt(r.obL):"above <strong>"+fmt(r.obH))+"</strong> — Order Block broken. Exit ALL positions immediately."}
+  ].map(function(r2){return '<div style="display:flex;gap:9px;align-items:flex-start;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:3px"><span style="font-size:12px;flex-shrink:0">'+r2.i+'</span><span style="font-size:11px;color:var(--text2);line-height:1.5">'+r2.t+'</span></div>';}).join("");
+}
+
+// ═══════════════════════════════════════════════
+// BUILT-IN SMC ANALYSIS ENGINE
+// No external API needed — works 100% offline
+// ═══════════════════════════════════════════════
+
+function generateSMCAnalysis(r, d, sym, nextNews){
+  var dir = r.direction;
+  var bias = r.bias;
+  var price = d.price > 0 ? fmt(d.price) : "current price";
+  var isIdx = (sym==="NAS100"||sym==="US30");
+  var unit = isIdx ? "points" : sym==="XAUUSD" ? "pips" : "pips";
+  var name = d.name;
+
+  // Session context
+  var sessCtx = r.bestSess ? "We are in a PRIME session — London or NY Overlap. Institutional orders are active." :
+                r.inSess   ? "We are in a valid trading session. Liquidity is building." :
+                             "Market is currently in a low-liquidity session. Best setups form at London Open (09:00 WAT) and NY Overlap (14:00 WAT).";
+
+  // Structure context
+  var structCtx = "";
+  if(dir==="RANGING"){
+    structCtx = sym+" is in a ranging market on H4. Price is oscillating between equal highs and lows with no clear directional bias. Smart money is accumulating — do not trade range until a clear Break of Structure forms. Watch for a decisive candle closing above recent highs (bullish BOS) or below recent lows (bearish BOS). That break is your signal to prepare for entry.";
+  } else if(dir==="BUY"){
+    structCtx = sym+" has confirmed a BULLISH structure on H4. "+
+    (r.bos ? "A Break of Structure to the upside has been confirmed — smart money has shown their hand. " : "")+
+    (r.choch ? "A Change of Character is forming — early signal of bullish reversal. " : "")+
+    "Bias is LONG. We are looking for BUY setups only. Do not short this market against the bias — you will be trading against institutional flow.";
+  } else if(dir==="SELL"){
+    structCtx = sym+" has confirmed a BEARISH structure on H4. "+
+    (r.bos ? "A Break of Structure to the downside is confirmed — institutions are selling. " : "")+
+    (r.choch ? "A Change of Character is forming — early bearish reversal signal. " : "")+
+    "Bias is SHORT. We are looking for SELL setups only. Any bullish moves are retracements — use them to find better sell entries.";
+  } else {
+    structCtx = "SMC checklist shows "+r.passCount+"/6 conditions met. Need at least 5/6 for a valid setup. "+
+    (!r.bos && !r.choch ? "No BOS or CHoCH yet — structure has not broken. This is the most important condition. Wait for it. " : "")+
+    (!r.liqSwept ? "Liquidity has not been swept. Smart money needs to grab stop losses before the real move. " : "")+
+    "Patience is the trade right now.";
+  }
+
+  // Entry guidance
+  var entryCtx = "";
+  if(dir==="BUY"&&r.entry){
+    entryCtx = "ENTRY PLAN: Watch M15 for a rejection candle at the Order Block zone ("+fmt(r.obL)+"–"+fmt(r.obH)+"). You need a bullish engulfing or hammer candle with a wick showing rejection. Enter at "+fmt(r.entry)+". Stop Loss below the OB at "+fmt(r.sl)+". Take 50% off at TP1 ("+fmt(r.tp1)+") and let the remainder run to the liquidity target at TP2 ("+fmt(r.tp2)+"). Move SL to break-even after TP1 hits.";
+  } else if(dir==="SELL"&&r.entry){
+    entryCtx = "ENTRY PLAN: Watch M15 for a rejection candle at the Order Block zone ("+fmt(r.obL)+"–"+fmt(r.obH)+"). You need a bearish engulfing or shooting star with a wick rejection. Enter at "+fmt(r.entry)+". Stop Loss above the OB at "+fmt(r.sl)+". Take 50% off at TP1 ("+fmt(r.tp1)+") and let the remainder run to the liquidity target at TP2 ("+fmt(r.tp2)+"). Move SL to break-even after TP1 hits.";
+  } else if(dir!=="RANGING"){
+    entryCtx = "No entry yet. Keep watching. When "+r.passCount+"/6 conditions are met, the system will flag the setup. Set an alert on your MT5 at the Order Block level and check back at London Open or NY Overlap.";
+  }
+
+  // News context
+  var newsCtx = nextNews !== "No upcoming news in the next 2 hours" ?
+    "⚠ NEWS RISK: "+nextNews+". Do NOT enter new positions within 30 minutes of this event. If you are already in profit, consider closing 50% and moving SL to break-even before the release." :
+    "News calendar is clear for the next 2 hours. Safe window to trade SMC setups.";
+
+  // FVG context
+  var fvgCtx = r.checks[3] && r.checks[3].pass ?
+    "A Fair Value Gap is present — price will likely return to fill this imbalance. This is your second entry zone after TP1." :
+    "No active FVG at this time. Wait for price to create an imbalance before looking for re-entry.";
+
+  return structCtx + "\n\n" + sessCtx + "\n\n" + entryCtx + "\n\n" + fvgCtx + "\n\n" + newsCtx;
+}
+
+function generateNewsAnalysis(next, d, sym){
+  if(!next){
+    return "No high-impact news event in the next 2 hours for "+sym+". The calendar is clear — you can trade SMC setups freely without news interference. Focus on the M15 entry trigger at the Order Block zone. Standard SMC rules apply.";
+  }
+  var evName = next.name;
+  var evMins = next.mins;
+  var evTime = next.watTime;
+  var imp = next.imp;
+  var prev = next.prev;
+  var forecast = next.forecast;
+  var isXAU = sym==="XAUUSD";
+  var isGBP = sym==="GBPUSD";
+  var isEUR = sym==="EURUSD";
+  var isIdx = sym==="NAS100"||sym==="US30";
+
+  var tp1 = isXAU?next.tp1:isIdx?next.tp1*10:next.tp1;
+  var tp2 = isXAU?next.tp2:isIdx?next.tp2*10:next.tp2;
+  var sl  = isXAU?next.sl:isIdx?next.sl*10:next.sl;
+  var off = next.off;
+
+  var dirBias = "";
+  if(evName.indexOf("CPI")>=0||evName.indexOf("Inflation")>=0){
+    dirBias = isXAU ? "LOWER than expected CPI = Gold PUMPS (USD weakens, Gold is hedge). HIGHER than expected = Gold drops initially, then recovers." :
+              isGBP||isEUR ? "HIGHER than expected = currency BULLISH (rate hike pressure). LOWER = currency bearish." :
+              "LOWER CPI = indices RALLY (Fed stays dovish). HIGHER = indices sell off.";
+  } else if(evName.indexOf("NFP")>=0||evName.indexOf("Unemployment")>=0||evName.indexOf("Employment")>=0){
+    dirBias = isXAU ? "LOWER NFP = Gold PUMPS (weak economy = Fed dovish = USD down). HIGHER NFP = Gold dips then recovers." :
+              isGBP ? "HIGHER employment/wages = GBP BULLISH. Lower = GBP sells off." :
+              "HIGHER jobs = indices initially rally. But if too strong, fear of rate hike = sell off.";
+  } else if(evName.indexOf("Rate")>=0||evName.indexOf("FOMC")>=0||evName.indexOf("BOE")>=0||evName.indexOf("ECB")>=0){
+    dirBias = isXAU ? "DOVISH tone or rate CUT = Gold PUMPS hard. HAWKISH = Gold dips but recovers quickly." :
+              isGBP ? "BOE HOLD with hawkish statement = GBP pumps. CUT = GBP sells off hard." :
+              isEUR ? "ECB CUT = EUR bearish. HOLD with hawkish = EUR pumps." :
+              "DOVISH Fed = indices rally hard. HAWKISH = sharp sell off.";
+  } else {
+    dirBias = "Compare ACTUAL vs FORECAST. Better than expected = "+sym+" bullish. Worse than expected = "+sym+" bearish.";
+  }
+
+  return "EVENT: "+evName+" | Impact: "+imp+" | Time: "+evTime+" Nigeria ("+evMins+" mins away)\n"+
+    "Previous: "+prev+" | Forecast: "+forecast+"\n\n"+
+    "DIRECTION GUIDE:\n"+dirBias+"\n\n"+
+    "STRADDLE SETUP (place 30 mins before news):\n"+
+    "• BUY STOP: "+off+" pips ABOVE current price\n"+
+    "• SELL STOP: "+off+" pips BELOW current price\n"+
+    "• Stop Loss: "+sl+" pips | TP1: "+tp1+" pips | TP2: "+tp2+" pips\n"+
+    "• When one triggers — CANCEL the other immediately\n\n"+
+    "POST-NEWS METHOD (higher win rate):\n"+
+    "Wait for the news spike to complete. Watch the first 5-minute candle AFTER the release to fully close. Enter in the direction that 5M candle closed. This avoids the fake-out that traps most retail traders.\n\n"+
+    "FAKE-OUT WARNING:\n"+
+    "Price almost always moves in one direction first, then reverses hard. Do NOT chase the first spike. Wait for the 5M candle close — that is where smart money shows the real direction.\n\n"+
+    "KEY RULE: Actual "+
+    (forecast && forecast!=="—" ? "vs Forecast "+forecast+" — if actual BEATS forecast = "+sym+" likely goes UP. If MISSES = "+sym+" likely goes DOWN." : "number is what moves the market. Compare to previous "+prev+".");
+}
+
+function runAI(){
+  var r=calcSMC();
+  lastAnalysis = { sym: sym, dir: r.dir };
+  buildChecklist(r);
+  buildZones();
+  buildTrigger(r);
+  if(r.direction==="BUY"||r.direction==="SELL"){
+    setVerdict(r.direction,r.direction,"<span class='hl'>"+r.passCount+"/6</span> SMC conditions met · "+r.bias+" BIAS<br>"+(r.bos?"✓ BOS confirmed · ":r.choch?"✓ CHoCH forming · ":"")+(r.liqSwept?"✓ Liquidity swept":"⚠ Await liquidity sweep"));
+    buildLevels(r);
+  } else if(r.direction==="RANGING"){
+    setVerdict("RANGING","RANGING","No clear H4 structure. Market is ranging.<br>Wait for a Break of Structure before taking any trade.");
+  } else {
+    setVerdict("WAIT","WAIT","Only <strong>"+r.passCount+"/6</strong> conditions met. Smart money rule: <strong>no full setup = no trade.</strong>");
+  }
+  var btn=document.getElementById("ai-btn");
+  if(btn){btn.disabled=true;btn.classList.add("loading");}
+  var btnTxt=document.getElementById("ai-btn-txt");if(btnTxt) btnTxt.textContent="ANALYSING...";
+  var aiEl=document.getElementById("ai-txt");if(aiEl) aiEl.innerHTML='<span class="cursor"></span>';
+  var d=MD[sym];
+  var events=getEvents();
+  var nextNews="No upcoming news in the next 2 hours";
+  for(var i=0;i<events.length;i++){if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>0&&events[i].mins<120){nextNews=events[i].name+" in "+events[i].mins+" mins ("+events[i].watTime+" Nigeria time)";break;}}
+  // Simulate thinking delay for UX
+  setTimeout(function(){
+    var text = generateSMCAnalysis(r, d, sym, nextNews);
+    typeText(aiEl, text);
+    if(btn){btn.disabled=false;btn.classList.remove("loading");}
+    if(btnTxt) btnTxt.textContent="⚡ Re-Analyse Setup";
+  }, 1200);
+}
+
+function runNewsAI(){
+  var events=getEvents();
+  var next=null;
+  for(var i=0;i<events.length;i++){if(events[i].pairs.indexOf(sym)>=0&&events[i].mins>-60){next=events[i];break;}}
+  var aiEl=document.getElementById("news-ai-txt");
+  var btn=document.getElementById("news-ai-btn");
+  var btxt=document.getElementById("news-btn-txt");
+  if(btn){btn.disabled=true;btn.classList.add("loading");}
+  if(aiEl) aiEl.innerHTML='<span class="cursor"></span>';
+  var d=MD[sym];
+  setTimeout(function(){
+    var text = generateNewsAnalysis(next, d, sym);
+    typeText(aiEl, text);
+    if(btn){btn.disabled=false;btn.classList.remove("loading");}
+    if(btxt) btxt.textContent="⚡ Re-Analyse News Event";
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════
+// CHART SNAPSHOT
+// ═══════════════════════════════════════════════
+function toggleSnapMenu(){
+  var m=document.getElementById("snap-menu");
+  if(m) m.classList.toggle("open");
+}
+document.addEventListener("click",function(e){
+  var btn=document.getElementById("snap-btn");
+  var menu=document.getElementById("snap-menu");
+  if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target)){
+    menu.classList.remove("open");
+  }
+});
+
+function getSnapCanvas(){
+  var chartCanvas=document.getElementById("sc");
+  var d=MD[sym];
+  var lvls=chartLevels[sym]||{};
+  var snap=document.createElement("canvas");
+  snap.width=chartCanvas.width;
+  snap.height=chartCanvas.height+60;
+  var ctx2=snap.getContext("2d");
+  ctx2.fillStyle="#020508"; ctx2.fillRect(0,0,snap.width,snap.height);
+  ctx2.fillStyle="#080f16"; ctx2.fillRect(0,0,snap.width,50);
+  ctx2.strokeStyle="#163040"; ctx2.lineWidth=1; ctx2.strokeRect(0,0,snap.width,50);
+  var chg=d.price-d.prev;
+  ctx2.fillStyle="#e8f4ff"; ctx2.font="bold 14px Syne,sans-serif"; ctx2.textAlign="left";
+  ctx2.fillText(sym+" · "+currentTF+" · "+d.name, 12, 22);
+  ctx2.fillStyle=chg>=0?"#2ecc8e":"#e74c3c"; ctx2.font="bold 13px monospace";
+  ctx2.fillText(fmt(d.price)+"  "+(chg>=0?"+":"")+fmt(chg)+" ("+(chg/d.prev*100).toFixed(2)+"%)", 12, 41);
+  ctx2.fillStyle="#3a5570"; ctx2.font="9px monospace"; ctx2.textAlign="right";
+  ctx2.fillText("SMART MONEY · "+new Date().toUTCString().slice(0,22)+" UTC", snap.width-10, 20);
+  if(lvls.entry) ctx2.fillText("ENT:"+fmt(lvls.entry)+"  SL:"+fmt(lvls.sl)+"  TP1:"+fmt(lvls.tp1), snap.width-10, 36);
+  ctx2.drawImage(chartCanvas, 0, 50);
+  return snap;
+}
+
+function snapDownload(){
+  toggleSnapMenu();
+  var snap=getSnapCanvas();
+  var a=document.createElement("a");
+  a.download=sym+"_"+currentTF+"_SMC_"+Date.now()+".png";
+  a.href=snap.toDataURL("image/png");
+  a.click();
+}
+
+function snapCopy(){
+  toggleSnapMenu();
+  var snap=getSnapCanvas();
+  snap.toBlob(function(blob){
+    try{
+      var item=new ClipboardItem({"image/png":blob});
+      navigator.clipboard.write([item]).then(function(){
+        alert("Chart copied to clipboard!");
+      });
+    } catch(e){
+      alert("Copy failed. Try the Download option instead.");
+    }
+  });
+}
+
+function snapShare(){
+  toggleSnapMenu();
+  var snap=getSnapCanvas();
+  snap.toBlob(function(blob){
+    var file=new File([blob],sym+"_SMC_chart.png",{type:"image/png"});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({
+        title:sym+" SMC Analysis — Smart Money",
+        text:sym+" "+currentTF+" analysis with Order Blocks, FVG and Liquidity zones",
+        files:[file]
+      });
+    } else {
+      // Fallback: download and prompt WhatsApp
+      var a=document.createElement("a");
+      a.download=sym+"_SMC_chart.png";
+      a.href=snap.toDataURL("image/png");
+      a.click();
+      setTimeout(function(){
+        window.open("https://wa.me/?text="+encodeURIComponent(sym+" SMC Analysis — check the chart I just saved!"),"_blank");
+      },600);
+    }
+  });
+}
+
+async function typeText(el,text){
+  if(!el) return;
+  el.innerHTML="";
+  var chunks=text.split(" ");
+  for(var i=0;i<chunks.length;i++){
+    el.innerHTML+=(i>0?" ":"")+chunks[i];
+    if(i%6===0) await new Promise(function(r){setTimeout(r,18);});
+  }
+}
+
+// Init
+updateStraddle();
+setInterval(updateStraddle,30000);
+
+// ═══════════════════════════════════════════════
+// TRADINGVIEW WIDGET — LIVE REAL CHART
+// ═══════════════════════════════════════════════
+// Symbol map: our symbols → TradingView format
+var tvSymMap = {
+  XAUUSD: "OANDA:XAUUSD",
+  GBPUSD: "OANDA:GBPUSD",
+  EURUSD: "OANDA:EURUSD",
+  NAS100: "OANDA:NAS100USD",
+  US30:   "OANDA:US30USD"
+};
+// TF map: our TF values → TradingView interval
+var tvTFMap = {
+  "1":"1","5":"5","15":"15","60":"60","240":"240","D":"D"
+};
+var tvWidget = null;
+var currentTvTF = "60"; // H1 default
+
+function initTradingView(symKey, interval){
+  var container = document.getElementById("tradingview_chart");
+  if(!container) return;
+  container.innerHTML = "";
+  var tvSym = tvSymMap[symKey] || "OANDA:XAUUSD";
+  var script = document.createElement("script");
+  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    "autosize": true,
+    "symbol": tvSym,
+    "interval": interval || "60",
+    "timezone": "Africa/Lagos",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "toolbar_bg": "#020508",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "backgroundColor": "rgba(2,5,8,1)",
+    "gridColor": "rgba(15,32,48,0.5)",
+    "container_id": "tradingview_chart"
+  });
+  container.appendChild(script);
+}
+
+// Override setChartTF to also update TradingView
+function setChartTF(tf, el){
+  currentTF = tf;
+  currentTvTF = tf;
+  document.querySelectorAll(".tf-tab-btn").forEach(function(b){b.classList.remove("active");});
+  if(el) el.classList.add("active");
+  var tfDisplayMap = {"1":"M1","5":"M5","15":"M15","60":"H1","240":"H4","D":"D1"};
+  var tfNameMap = {"1":"M1 — PRECISION","5":"M5 — CONFIRMATION","15":"M15 — ENTRY TRIGGER","60":"H1 — SETUP ZONE","240":"H4 — TREND FILTER","D":"D1 — MACRO BIAS"};
+  var ct = document.getElementById("chart-title");
+  if(ct) ct.textContent = sym + " — " + (tfNameMap[tf] || tf) + " · LIVE";
+  var rb = document.getElementById("tf-rule-bar");
+  var ruleMap = {
+    "1":  "⚠️ M1 = PRECISION ENTRY only. Fine-tune after M15 is confirmed. Never use M1 to find direction.",
+    "5":  "🔍 M5 = CONFIRMATION. Confirm M15 signal with consecutive closes. Never use M5 alone.",
+    "15": "⚡ M15 = ENTRY TRIGGER. Watch for rejection candle inside H1 OB/FVG zone. Enter on next candle open.",
+    "60": "🎯 H1 = SETUP ZONE — Find Order Block + FVG. Wait for price to return here. This is where your setup forms.",
+    "240":"📊 H4 = TREND FILTER. Higher Highs/Higher Lows = Bullish. Identify bias only — do NOT enter here.",
+    "D":  "📅 D1 = MACRO PICTURE. Are we in a bull or bear market? Only trade in this direction on all lower timeframes."
+  };
+  if(rb) rb.textContent = ruleMap[tf] || "";
+  initTradingView(sym, tf);
+}
+
+// Override selSym to also reload TradingView chart
+var _origSelSym = selSym;
+function selSym(s, el){
+  sym = s;
+  document.querySelectorAll(".ic").forEach(function(c){c.classList.remove("active");});
+  if(el) el.classList.add("active");
+  var ct = document.getElementById("chart-title");
+  var tfNameMap = {"1":"M1 — PRECISION","5":"M5 — CONFIRMATION","15":"M15 — ENTRY TRIGGER","60":"H1 — SETUP ZONE","240":"H4 — TREND FILTER","D":"D1 — MACRO BIAS"};
+  if(ct) ct.textContent = s + " — " + (tfNameMap[currentTvTF]||"H1 — SETUP ZONE") + " · LIVE";
+  resetUI();
+  initTradingView(s, currentTvTF);
+  updateStraddle();
+  updateNewsWarn();
+  updateNewsCalendar();
+}
+
+// Boot TradingView on page load
+(function(){
+  initTradingView("XAUUSD", "60");
+})();
+
+// ═══════════════════════════════════════════════
+// NEWS PANEL — COLLAPSIBLE DROPDOWN
+// ═══════════════════════════════════════════════
+var newsPanelOpen = false;
+var _newsPanelLock = false;
+function toggleNewsPanel(){
+  if(_newsPanelLock) return;
+  _newsPanelLock = true;
+  setTimeout(function(){ _newsPanelLock = false; }, 400);
+  newsPanelOpen = !newsPanelOpen;
+  var body = document.getElementById("news-panel-body");
+  var chev = document.getElementById("news-panel-chevron");
+  if(body) body.style.display = newsPanelOpen ? "block" : "none";
+  if(chev) chev.style.transform = newsPanelOpen ? "rotate(180deg)" : "rotate(0deg)";
+}
+
+// ── Claude API helper — browser compatible ──
+async function claudeAPI(prompt){
+  var payload = JSON.stringify({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 800,
+    messages: [{ role: "user", content: prompt }]
+  });
+  var headers = {
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true"
+  };
+  // Try direct Anthropic API
+  try {
+    var r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: headers, body: payload
+    });
+    if(r.ok){
+      var d = await r.json();
+      return d.content ? d.content.map(function(c){return c.text||"";}).join("") : "No response.";
+    }
+    var errText = await r.text();
+    throw new Error("API error: " + r.status + " " + errText);
+  } catch(e){
+    // Try via allorigins proxy
+    try {
+      var proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.anthropic.com/v1/messages");
+      var r2 = await fetch(proxyUrl, {
+        method: "POST", headers: headers, body: payload
+      });
+      if(r2.ok){
+        var d2 = await r2.json();
+        return d2.content ? d2.content.map(function(c){return c.text||"";}).join("") : "No response.";
+      }
+    } catch(e2){}
+    throw new Error("Connection failed. Check internet and try again.");
+  }
+}
+
+
+var API_KEY = "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";
+
+function runNewsEventAI(eventId, btnEl){
+  var events = getEvents();
+  var ev = events[eventId];
+  if(!ev) return;
+
+  var resultEl = document.getElementById("news-ai-result-"+eventId);
+  if(!resultEl) return;
+
+  btnEl.disabled = true;
+  btnEl.textContent = "Analysing...";
+  resultEl.innerHTML = '<div style="color:var(--text3);font-size:11px;">⏳ Running analysis...</div>';
+
+  setTimeout(function(){
+    var text = generateNewsAnalysis(ev, MD[sym], sym);
+    resultEl.innerHTML = '<div style="font-size:11px;color:var(--text2);line-height:1.8;white-space:pre-wrap;">'+text+'</div>';
+    btnEl.disabled = false;
+    btnEl.textContent = "🔄 Re-analyse";
+  }, 800);
+}
+
+
+</script>
+</body>
+</html>
