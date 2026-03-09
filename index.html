@@ -659,6 +659,7 @@ body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",sans-ser
         <div class="ai-top"><div class="ai-chip">SMC MODE</div><div class="ai-mode">OB · FVG · BOS/CHoCH · Liquidity · Structure</div></div>
         <div class="ai-txt" id="ai-txt">Press Analyse to get a full Smart Money Concepts breakdown — structure bias, active order blocks, fair value gaps, liquidity targets, and your exact M15 entry trigger.</div>
       </div>
+      <button id="alert-settings-btn" onclick="openAlertSettings()" style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;padding:8px 14px;border-radius:4px;cursor:pointer;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.3);color:var(--cyan2);margin-bottom:8px;width:100%;">🔕 SET ALERTS</button>
       <button class="btn btn-p" id="ai-btn" onclick="runAI()">
         <span class="bspin" id="ai-spin"></span>
         <span id="ai-btn-txt">⚡ Analyse SMC Setup</span>
@@ -2359,7 +2360,205 @@ function runNewsEventAI(eventId, btnEl){
   }, 800);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// SMC ALERT SYSTEM — Telegram + WhatsApp
+// ═══════════════════════════════════════════════════════════════
+
+var ALERT_CFG = {
+  tgToken:  "8758501614:AAHgjf9kqofvoMfCXqcjwy_tlybdzglRx6U",
+  tgChatId: "6036881617",
+  waBotKey: "",
+  waPhone:  "",
+  enabled:  true
+};
+
+// Per-symbol cooldown: don't re-alert same signal within 4 hours
+var ALERT_LAST = {};
+
+function saveAlertCfg(){
+  localStorage.setItem("smc_tg_token",  ALERT_CFG.tgToken);
+  localStorage.setItem("smc_tg_chatid", ALERT_CFG.tgChatId);
+  localStorage.setItem("smc_wa_key",    ALERT_CFG.waBotKey);
+  localStorage.setItem("smc_wa_phone",  ALERT_CFG.waPhone);
+  localStorage.setItem("smc_alerts_on", ALERT_CFG.enabled ? "1" : "0");
+}
+
+// ── Send Telegram message ─────────────────────────────────────
+function sendTelegram(msg){
+  if(!ALERT_CFG.tgToken || !ALERT_CFG.tgChatId) return Promise.resolve();
+  var url = "https://api.telegram.org/bot" + ALERT_CFG.tgToken + "/sendMessage";
+  return fetch(url, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ chat_id: ALERT_CFG.tgChatId, text: msg, parse_mode: "HTML" })
+  }).catch(function(e){ console.warn("Telegram send failed:", e); });
+}
+
+// ── Send WhatsApp via CallMeBot ───────────────────────────────
+function sendWhatsApp(msg){
+  if(!ALERT_CFG.waBotKey || !ALERT_CFG.waPhone) return Promise.resolve();
+  var encoded = encodeURIComponent(msg);
+  var url = "https://api.callmebot.com/whatsapp.php?phone=" + ALERT_CFG.waPhone
+          + "&text=" + encoded + "&apikey=" + ALERT_CFG.waBotKey;
+  return fetch(url).catch(function(e){ console.warn("WhatsApp send failed:", e); });
+}
+
+// ── Build the alert message ───────────────────────────────────
+function buildAlertMsg(symKey, r, verdict){
+  var d = MD[symKey] || {};
+  var price = d.price ? d.price.toFixed(symKey==="GBPUSD"||symKey==="EURUSD"?5:2) : "—";
+  var dashLink = "https://topsungtee.github.io/smc-trading";
+
+  var icon = verdict === "BUY"  ? "🟢 BUY"
+           : verdict === "SELL" ? "🔴 SELL"
+           : "🟡 SETUP FORMING";
+
+  var condLines =
+    (r.h4Struct   ? "✅" : "❌") + " H4 Market Structure\n" +
+    (r.bos||r.choch ? "✅" : "❌") + " BOS / CHoCH\n" +
+    (r.ob         ? "✅" : "❌") + " Order Block\n" +
+    (r.fvg        ? "✅" : "❌") + " Fair Value Gap\n" +
+    (r.liqSwept   ? "✅" : "❌") + " Liquidity Swept\n" +
+    (r.session    ? "✅" : "❌") + " Active Session";
+
+  var levels = "";
+  if((verdict==="BUY"||verdict==="SELL") && r.entry){
+    levels = "\n\n🎯 TRADE LEVELS\n"
+           + "Entry:  " + r.entry + "\n"
+           + "SL:     " + r.sl + "\n"
+           + "TP1:    " + r.tp1 + "  (close 50%)\n"
+           + "TP2:    " + r.tp2 + "  (full run)";
+  }
+
+  var msg = "============================\n"
+          + "SMC INTELLIGENCE ALERT\n"
+          + icon + "  —  " + symKey + "\n"
+          + "Score: " + r.passCount + "/6 conditions\n"
+          + "Price: " + price + "\n"
+          + "============================\n\n"
+          + "CONDITIONS:\n" + condLines
+          + levels + "\n\n"
+          + "🔗 Confirm setup:\n" + dashLink + "\n"
+          + "============================";
+
+  return msg;
+}
+
+// ── Main scan — checks all 5 symbols ─────────────────────────
+function scanAllSymbols(){
+  if(!ALERT_CFG.enabled) return;
+  var symbols = ["XAUUSD","GBPUSD","EURUSD","NAS100","US30"];
+  var prevSym = sym; // save active sym
+
+  symbols.forEach(function(s){
+    sym = s; // temporarily switch context for calcSMC
+    var r = calcSMC();
+    var verdict = r.direction; // BUY / SELL / WAIT / RANGING
+    var key = s + "_" + verdict;
+    var now = Date.now();
+
+    // Only alert on BUY, SELL, or WAIT(5/6). Skip RANGING.
+    if(verdict === "RANGING") return;
+    if(verdict === "WAIT" && r.passCount < 5) return;
+
+    // Cooldown: 4 hours per symbol+verdict combo
+    if(ALERT_LAST[key] && (now - ALERT_LAST[key]) < 4*60*60*1000) return;
+
+    ALERT_LAST[key] = now;
+    var msg = buildAlertMsg(s, r, verdict);
+    sendTelegram(msg);
+    sendWhatsApp(msg);
+    console.log("Alert sent:", s, verdict, r.passCount+"/6");
+  });
+
+  sym = prevSym; // restore
+}
+
+// ── Run scan every 5 minutes ──────────────────────────────────
+setInterval(scanAllSymbols, 5 * 60 * 1000);
+// Also run once 3 seconds after boot
+setTimeout(scanAllSymbols, 3000);
+
+// ── Alert Settings Modal ──────────────────────────────────────
+function openAlertSettings(){
+  document.getElementById("alert-modal").style.display = "flex";
+  document.getElementById("am-tg-token").value  = ALERT_CFG.tgToken;
+  document.getElementById("am-tg-chat").value   = ALERT_CFG.tgChatId;
+  document.getElementById("am-wa-phone").value  = ALERT_CFG.waPhone;
+  document.getElementById("am-wa-key").value    = ALERT_CFG.waBotKey;
+  document.getElementById("am-enabled").checked = ALERT_CFG.enabled;
+}
+
+function closeAlertSettings(){
+  document.getElementById("alert-modal").style.display = "none";
+}
+
+function saveAlertSettings(){
+  ALERT_CFG.tgToken  = document.getElementById("am-tg-token").value.trim();
+  ALERT_CFG.tgChatId = document.getElementById("am-tg-chat").value.trim();
+  ALERT_CFG.waPhone  = document.getElementById("am-wa-phone").value.trim();
+  ALERT_CFG.waBotKey = document.getElementById("am-wa-key").value.trim();
+  ALERT_CFG.enabled  = document.getElementById("am-enabled").checked;
+  saveAlertCfg();
+  closeAlertSettings();
+  updateAlertBtn();
+  alert("Alert settings saved! You will receive a test message shortly.");
+  // Send test message
+  var testMsg = "SMC Intelligence CONNECTED\nAlerts are now active.\nYou will receive BUY/SELL signals and WAIT heads-ups for:\nXAUUSD · GBPUSD · EURUSD · NAS100 · US30\n\nhttps://topsungtee.github.io/smc-trading";
+  sendTelegram(testMsg);
+  sendWhatsApp(testMsg);
+}
+
+function updateAlertBtn(){
+  var btn = document.getElementById("alert-settings-btn");
+  if(!btn) return;
+  btn.textContent = ALERT_CFG.enabled ? "🔔 ALERTS ON" : "🔕 SET ALERTS";
+  btn.style.borderColor = ALERT_CFG.enabled ? "var(--green)" : "rgba(6,182,212,.3)";
+  btn.style.color = ALERT_CFG.enabled ? "var(--green)" : "var(--cyan2)";
+}
+
+window.addEventListener("load", function(){ updateAlertBtn(); });
 
 </script>
+
+<!-- ── Alert Settings Modal ─────────────────────────────────── -->
+<div id="alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#0f1923;border:1px solid rgba(6,182,212,.3);border-radius:8px;width:100%;max-width:420px;padding:24px;font-family:'IBM Plex Mono',monospace;">
+    <div style="color:var(--cyan2);font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:18px;">🔔 ALERT SETTINGS</div>
+
+    <div style="font-size:10px;color:var(--text3);margin-bottom:14px;line-height:1.7;">
+      Receive Telegram + WhatsApp alerts when SMC signals fire on any of the 5 instruments. Setup takes 5 minutes.
+    </div>
+
+    <!-- Enable toggle -->
+    <label style="display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer;">
+      <input type="checkbox" id="am-enabled" style="width:16px;height:16px;accent-color:var(--green);">
+      <span style="font-size:11px;color:var(--text2);">ENABLE ALERTS</span>
+    </label>
+
+    <!-- Telegram -->
+    <div style="font-size:10px;color:var(--cyan2);letter-spacing:1.5px;margin-bottom:8px;">TELEGRAM</div>
+    <input id="am-tg-token" type="text" placeholder="Bot Token  (from @BotFather)" style="width:100%;box-sizing:border-box;background:#162030;border:1px solid rgba(6,182,212,.2);border-radius:4px;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 10px;margin-bottom:8px;">
+    <input id="am-tg-chat"  type="text" placeholder="Chat ID  (your numeric ID)" style="width:100%;box-sizing:border-box;background:#162030;border:1px solid rgba(6,182,212,.2);border-radius:4px;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 10px;margin-bottom:16px;">
+
+    <!-- WhatsApp -->
+    <div style="font-size:10px;color:var(--cyan2);letter-spacing:1.5px;margin-bottom:8px;">WHATSAPP  (via CallMeBot)</div>
+    <input id="am-wa-phone" type="text" placeholder="Phone number  e.g. 2348060095834" style="width:100%;box-sizing:border-box;background:#162030;border:1px solid rgba(6,182,212,.2);border-radius:4px;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 10px;margin-bottom:8px;">
+    <input id="am-wa-key"   type="text" placeholder="CallMeBot API Key" style="width:100%;box-sizing:border-box;background:#162030;border:1px solid rgba(6,182,212,.2);border-radius:4px;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 10px;margin-bottom:16px;">
+
+    <div style="font-size:10px;color:var(--text3);margin-bottom:16px;line-height:1.7;">
+      To get CallMeBot key: Save <strong style="color:var(--text2);">+34 644 71 93 69</strong> on WhatsApp, then send:<br>
+      <span style="color:var(--green);">I allow callmebot to send me messages</span><br>
+      They will reply with your API key.
+    </div>
+
+    <!-- Buttons -->
+    <div style="display:flex;gap:10px;">
+      <button onclick="saveAlertSettings()" style="flex:1;background:rgba(6,182,212,.12);border:1px solid var(--cyan2);color:var(--cyan2);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px;border-radius:4px;cursor:pointer;">SAVE & TEST</button>
+      <button onclick="closeAlertSettings()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px;border-radius:4px;cursor:pointer;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
